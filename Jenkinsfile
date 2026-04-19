@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // The ID you gave your Docker credentials in Jenkins
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKER_HUB_CREDENTIALS = credentials('dockerHubCred')
         // Replace 'yourusername' with your actual Docker Hub username
         DOCKER_HUB_USERNAME    = 'shyammedh'
         IMAGE_NAME             = "${DOCKER_HUB_USERNAME}/jeevandeep-clinic"
