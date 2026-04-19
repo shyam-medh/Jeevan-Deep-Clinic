@@ -52,8 +52,8 @@ pipeline {
             steps {
                 script {
                     echo 'Starting/Verifying database container...'
-                    // This ensures MySQL is running before we swap app containers
-                    sh 'docker-compose up -d db'
+                    // Using 'docker compose' (V2) instead of 'docker-compose'
+                    sh 'docker compose up -d db'
                 }
             }
         }
