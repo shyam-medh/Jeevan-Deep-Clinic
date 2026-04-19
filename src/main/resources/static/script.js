@@ -8,23 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
+            navLinks.classList.toggle('open');
             // Change icon
             const icon = mobileMenuBtn.querySelector('i');
-            if (navLinks.classList.contains('active')) {
+            if (navLinks.classList.contains('open')) {
                 icon.setAttribute('data-lucide', 'x');
-                navLinks.style.display = 'flex';
-                navLinks.style.flexDirection = 'column';
-                navLinks.style.position = 'absolute';
-                navLinks.style.top = '80px';
-                navLinks.style.left = '0';
-                navLinks.style.width = '100%';
-                navLinks.style.background = 'white';
-                navLinks.style.padding = '20px';
-                navLinks.style.boxShadow = '0 10px 10px rgba(0,0,0,0.1)';
             } else {
                 icon.setAttribute('data-lucide', 'menu');
-                navLinks.style.display = 'none';
             }
             lucide.createIcons();
         });
