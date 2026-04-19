@@ -69,21 +69,23 @@ pipeline {
 
                     // 3. Switch Nginx traffic to the new container
                     echo "Switching Nginx traffic to port ${newPort}..."
-                    sh """
-                        echo 'server {
-                            listen 80;
-                            server_name _;
-                            location / {
-                                proxy_pass http://127.0.0.1:${newPort};
-                                proxy_set_header Host \\\$host;
-                                proxy_set_header X-Real-IP \\\$remote_addr;
-                                proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
-                                proxy_set_header X-Forwarded-Proto \\\$scheme;
-                            }
-                        }' > nginx_temp.conf
+                    sh '''
+                        cat > nginx_temp.conf <<'NGINXEOF'
+server {
+    listen 80;
+    server_name _;
+    location / {
+        proxy_pass http://127.0.0.1:NEWPORT;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+NGINXEOF
                         sudo mv nginx_temp.conf /etc/nginx/sites-available/default
-                        sudo systemctl reload nginx
-                    """
+                        sudo nginx -t && sudo systemctl reload nginx
+                    '''.replace('NEWPORT', newPort)
 
                     // 4. Stop the old container
                     if (isBlueRunning) {
