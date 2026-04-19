@@ -36,6 +36,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Spring Security for Doctor/Admin Authentication -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- Spring Boot Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
