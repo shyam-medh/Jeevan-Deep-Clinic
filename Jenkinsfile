@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent dard
 
     environment {
         IMAGE_NAME = 'jeevandeep-clinic'
