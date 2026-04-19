@@ -1,5 +1,7 @@
 package com.jeevandeep.config;
 
+import com.jeevandeep.repository.ClinicSettingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,52 +18,60 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private ClinicSettingRepository settingRepository;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF so our frontend Javascript can POST appointments freely
-            .csrf().disable()
-            
-            // Define Authorization rules
-            .authorizeHttpRequests((authz) -> authz
-                // Patients are allowed to see the main page, static assets, and the admin UI skeleton
-                .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html").permitAll()
-                // Patients are allowed to POST their appointment forms
-                .antMatchers(HttpMethod.POST, "/api/appointments").permitAll()
-                
-                // Doctors must be authenticated to fetch the appointment data
-                .antMatchers(HttpMethod.GET, "/api/appointments").authenticated()
-                .antMatchers(HttpMethod.DELETE, "/api/appointments/**").authenticated()
-                
-                // Any other unknown request must be authenticated as a fallback
-                .anyRequest().authenticated()
-            )
-            // Use Form Login to connect to the custom Clinic Portal UI
-            .formLogin()
-                .loginPage("/admin.html")          // Point Spring to your custom UI
-                .loginProcessingUrl("/perform_login") // The hidden API that validates the password
+                .csrf().disable()
+                .authorizeHttpRequests((authz) -> authz
+                        .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html")
+                        .permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/appointments", "/api/reviews", "/api/questions").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/reviews/public", "/api/questions/public").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/appointments").authenticated()
+                        .antMatchers(HttpMethod.DELETE, "/api/appointments/**").authenticated()
+                        .anyRequest().authenticated())
+                .formLogin()
+                .loginPage("/admin.html")
+                .loginProcessingUrl("/perform_login")
                 .defaultSuccessUrl("/admin.html", true)
                 .failureUrl("/admin.html?error=true")
                 .permitAll()
-            .and()
-            .logout()
+                .and()
+                .logout()
                 .logoutUrl("/perform_logout")
                 .logoutSuccessUrl("/admin.html")
                 .permitAll();
-            
+
         return http.build();
     }
 
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
         PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        
-        // Define the Doctor's Credentials
-        UserDetails doctor = User.withUsername("doctor")
-            .password(encoder.encode("adminpassword123"))
-            .roles("ADMIN")
-            .build();
-            
+
+        // Check if doctor has previously saved a custom password in the database
+        String passwordHash = settingRepository.findById("admin_password_hash")
+                .map(s -> s.getValue())
+                .orElse(null);
+
+        UserDetails doctor;
+        if (passwordHash != null && !passwordHash.isEmpty()) {
+            // Use the persisted hash directly (already encoded)
+            doctor = User.withUsername("doctor")
+                    .password(passwordHash)
+                    .roles("ADMIN")
+                    .build();
+        } else {
+            // Fall back to the default password: jeevan123
+            doctor = User.withUsername("doctor")
+                    .password(encoder.encode("jeevan123"))
+                    .roles("ADMIN")
+                    .build();
+        }
+
         return new InMemoryUserDetailsManager(doctor);
     }
 }

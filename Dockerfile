@@ -1,21 +1,26 @@
-# Build stage
+# --- Build Stage ---
 FROM maven:3.8.4-openjdk-11-slim AS build
 WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline
 
 COPY src ./src
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
-# Run stage
-FROM eclipse-temurin:11-jre-focal
+# --- Run Stage ---
+FROM eclipse-temurin:11-jre-alpine
 WORKDIR /app
 
-# Copy the built jar file from the build stage
-COPY --from=build /app/target/clinic-0.0.1-SNAPSHOT.jar app.jar
+# Create a non-root user for security
+RUN addgroup -S clinicgroup && adduser -S clinicuser -G clinicgroup
+USER clinicuser
 
-# Expose the default Spring Boot port
+# Copy the JAR from build stage
+COPY --from=build --chown=clinicuser:clinicgroup /app/target/clinic-0.0.1-SNAPSHOT.jar app.jar
+
+# Optimize JVM settings for container environments
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

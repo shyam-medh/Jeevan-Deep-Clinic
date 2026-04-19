@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # MySQL Database Container
+  db:
+    image: mysql:8.0
+    container_name: clinic-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: clinic_db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3307:3306" # Expose MySQL on 3307 on host to avoid conflicts
+    volumes:
+      - clinic-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      timeout: 5s
+      retries: 10
+
+  # Jeevan Deep Clinic App Container
+  app:
+    build: .
+    container_name: clinic-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=mysql
+      - DB_HOST=db
+      - DB_NAME=clinic_db
+      - DB_USER=root
+      - DB_PASSWORD=password
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - clinic-network
+
+networks:
+  clinic-network:
+
+volumes:
+  clinic-data:
