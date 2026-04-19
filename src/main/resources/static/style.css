@@ -40,6 +40,8 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 body {
@@ -48,6 +50,7 @@ body {
     background-color: var(--bg-light);
     line-height: 1.6;
     overflow-x: hidden;
+    width: 100%;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -321,6 +324,7 @@ img {
 
 .hero-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: 40px;
     padding-top: 30px;
     border-top: 1px solid var(--border-color);
