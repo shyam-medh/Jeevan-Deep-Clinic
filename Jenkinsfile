@@ -1,6 +1,10 @@
 pipeline {
     agent { label 'clinic' }
 
+    triggers {
+        githubPush()
+    }
+
     environment {
         // The ID you gave your Docker credentials in Jenkins
         DOCKER_HUB_CREDENTIALS = credentials('dockerHubCred')
@@ -11,6 +15,13 @@ pipeline {
         GREEN_PORT             = '8082'
         BLUE_CONTAINER         = 'jeevandeep-clinic-blue'
         GREEN_CONTAINER        = 'jeevandeep-clinic-green'
+        
+        // Database credentials (must match docker-compose.yml)
+        DB_HOST                = 'clinic-db'
+        DB_NAME                = 'clinic_db'
+        DB_USER                = 'root'
+        DB_PASS                = 'password'
+        NETWORK_NAME           = 'mkt-project_clinic-network' 
     }
 
     stages {
@@ -41,6 +52,16 @@ pipeline {
             }
         }
 
+        stage('Ensure Database Up') {
+            steps {
+                script {
+                    echo 'Starting/Verifying database container...'
+                    // This ensures MySQL is running before we swap app containers
+                    sh 'docker-compose up -d db'
+                }
+            }
+        }
+
         stage('Blue-Green Deploy') {
             steps {
                 script {
@@ -56,16 +77,43 @@ pipeline {
 
                     echo "Currently active: ${oldContainer}. Deploying to ${newContainer} on port ${newPort}..."
 
-                    // 1. Start the New Container
+                    // 1. Start the New Container (Connected to DB network)
                     sh """
                         docker stop ${newContainer} || true
                         docker rm   ${newContainer} || true
-                        docker run -d --name ${newContainer} -p ${newPort}:8080 --restart unless-stopped ${IMAGE_NAME}:latest
+                        docker run -d --name ${newContainer} \
+                            -p ${newPort}:8080 \
+                            --network ${NETWORK_NAME} \
+                            -e SPRING_PROFILES_ACTIVE=mysql \
+                            -e DB_HOST=${DB_HOST} \
+                            -e DB_NAME=${DB_NAME} \
+                            -e DB_USER=${DB_USER} \
+                            -e DB_PASSWORD=${DB_PASS} \
+                            --restart unless-stopped \
+                            ${IMAGE_NAME}:latest
                     """
 
-                    // 2. Wait for Spring Boot to boot
-                    echo 'Waiting 15 seconds for the server to initialize...'
-                    sleep 15
+                    // 2. Wait for Spring Boot to boot (Smart Health Check)
+                    echo "Waiting for ${newContainer} to become healthy..."
+                    def isHealthy = false
+                    def timeout = 60 // 60 seconds max
+                    while (timeout > 0) {
+                        def status = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:${newPort}/actuator/health || true", returnStdout: true).trim()
+                        if (status == "200") {
+                            echo "✅ Container is healthy!"
+                            isHealthy = true
+                            break
+                        }
+                        echo "Waiting... (${timeout}s remaining)"
+                        sleep 2
+                        timeout -= 2
+                    }
+
+                    if (!isHealthy) {
+                        echo "❌ Container failed to become healthy. Aborting deployment."
+                        sh "docker stop ${newContainer} && docker rm ${newContainer}"
+                        error "Deployment failed: Health check timeout"
+                    }
 
                     // 3. Switch Nginx traffic to the new container
                     echo "Switching Nginx traffic to port ${newPort}..."
@@ -106,7 +154,8 @@ NGINXEOF
 
         stage('Cleanup') {
             steps {
-                sh 'docker image prune -f'
+                echo 'Cleaning up old images...'
+                sh 'docker image prune -af --filter "until=24h"'
             }
         }
     }

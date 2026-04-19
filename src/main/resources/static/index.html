@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeevan Deep Clinic | Caring for Your Smile with Trust & Precision</title>
+    <title>Jeevan Deep Clinic (Dental Clinic)| Caring for Your Smile with Trust & Precision</title>
     <meta name="description"
         content="Jeevan Deep Clinic - Reliable, affordable, and painless dental treatment in a hygienic environment. Book your appointment today for a healthy smile.">
 
@@ -17,6 +17,9 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Font Awesome for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- AOS Animation CSS -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -40,7 +43,7 @@
     <nav class="navbar transition-all" id="navbar">
         <div class="container nav-container">
             <div class="logo">
-                <span class="logo-text">Jeevan Deep <span class="highlight">Clinic</span></span>
+                <span class="logo-text">Jeevan Deep Clinic <span class="highlight">(Dental Clinic)</span></span>
             </div>
             <ul class="nav-links">
                 <li><a href="#home" class="active">Home</a></li>
@@ -200,47 +203,46 @@
     <!-- Testimonials Section -->
     <section id="testimonials" class="testimonials">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
+            <div class="section-header" style="position: relative;" data-aos="fade-up">
                 <span class="section-tag">Patient Stories</span>
                 <h2>What Our Patients Say</h2>
+                <button id="open-review-modal" class="btn btn-primary btn-sm" style="margin-top: 15px;">Write a
+                    Review</button>
             </div>
-            <div class="testimonials-slider">
-                <div class="testimonial-card" data-aos="fade-right" data-aos-delay="100">
-                    <div class="quote-icon"><i data-lucide="quote"></i></div>
-                    <div class="stars">★★★★★</div>
-                    <p>"Very smooth and painless treatment. Dr. Baranwal was very patient in explaining the procedure.
-                        Highly recommended for any dental issues!"</p>
-                    <div class="patient-profile">
-                        <div class="patient-avatar">R</div>
-                        <div class="patient-info">
-                            <strong>Rahul Verma</strong>
-                        </div>
+            <div class="testimonials-slider" id="dynamic-reviews">
+                <!-- Javascript will load reviews here -->
+            </div>
+        </div>
+
+        <!-- Review Submission Modal -->
+        <div id="review-modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+            <div
+                style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; position: relative;">
+                <button id="close-review-modal"
+                    style="position: absolute; right: 20px; top: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                <h3 style="margin-bottom: 20px;">Write a Review</h3>
+                <form id="review-form">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="review-name" required placeholder="Name">
                     </div>
-                </div>
-                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="quote-icon"><i data-lucide="quote"></i></div>
-                    <div class="stars">★★★★★</div>
-                    <p>"I was terrified of root canals, but the experience here was completely different. No pain at all
-                        and the clinic is exceptionally clean."</p>
-                    <div class="patient-profile">
-                        <div class="patient-avatar">P</div>
-                        <div class="patient-info">
-                            <strong>Priyanka Das</strong>
-                        </div>
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <select id="review-rating" required>
+                            <option value="5">★★★★★ (5/5)</option>
+                            <option value="4">★★★★☆ (4/5)</option>
+                            <option value="3">★★★☆☆ (3/5)</option>
+                            <option value="2">★★☆☆☆ (2/5)</option>
+                            <option value="1">★☆☆☆☆ (1/5)</option>
+                        </select>
                     </div>
-                </div>
-                <div class="testimonial-card" data-aos="fade-left" data-aos-delay="300">
-                    <div class="quote-icon"><i data-lucide="quote"></i></div>
-                    <div class="stars">★★★★★</div>
-                    <p>"The best dental clinic in the area. Modern equipment and incredibly professional staff. My
-                        braces treatment is progressing flawlessly!"</p>
-                    <div class="patient-profile">
-                        <div class="patient-avatar">A</div>
-                        <div class="patient-info">
-                            <strong>Ankit Mishra</strong>
-                        </div>
+                    <div class="form-group">
+                        <label>Your Experience</label>
+                        <textarea id="review-comment" required rows="4" placeholder="Tell us how we did..."></textarea>
                     </div>
-                </div>
+                    <button type="submit" class="btn btn-primary btn-block">Submit Review</button>
+                </form>
             </div>
         </div>
     </section>
@@ -250,7 +252,7 @@
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <span class="section-tag">Our Environment</span>
-                <h2>Inside Jeevan Deep Clinic</h2>
+                <h2>Inside Jeevan Deep Clinic (Dental Clinic)</h2>
             </div>
             <div class="gallery-grid">
                 <div class="gallery-item" data-aos="fade-up" data-aos-delay="100">
@@ -259,19 +261,20 @@
                     <div class="gallery-overlay"><span>Modern Operatory</span></div>
                 </div>
                 <div class="gallery-item large" data-aos="fade-up" data-aos-delay="200">
-                    <img src="https://images.unsplash.com/photo-1527613426441-4da17471b66d?q=80&w=800&auto=format&fit=crop"
-                        alt="Dental Equipment">
-                    <div class="gallery-overlay"><span>Advanced Technology</span></div>
+                    <img src="/images/image2.jpeg" alt="Dental Equipment">
+                    <div class="gallery-overlay"><span>Doctor Operating</span></div>
                 </div>
                 <div class="gallery-item" data-aos="fade-up" data-aos-delay="300">
-                    <img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                        alt="Patient Care">
-                    <div class="gallery-overlay"><span>Hygiene Standards</span></div>
+                    <img src="/images/image1.jpeg" alt="Patient Care">
+                    <div class="gallery-overlay"><span>Tooth Reports</span></div>
                 </div>
                 <div class="gallery-item" data-aos="fade-up" data-aos-delay="400">
-                    <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                        alt="Hygiene Standards">
-                    <div class="gallery-overlay"><span>Comfortable Recovery</span></div>
+                    <img src="/images/image3.jpeg" alt="Comfortable Recovery">
+                    <div class="gallery-overlay"><span>Doctor Cabin</span></div>
+                </div>
+                <div class="gallery-item" data-aos="fade-up" data-aos-delay="500">
+                    <img src="/images/image4.jpeg" alt="Dental Care Environment">
+                    <div class="gallery-overlay"><span>Doctor With Compunder</span></div>
                 </div>
             </div>
         </div>
@@ -280,10 +283,14 @@
     <!-- FAQ Section -->
     <section id="faq" class="faq">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
+            <div class="section-header" style="position: relative;" data-aos="fade-up">
                 <span class="section-tag">Common Questions</span>
                 <h2>Frequently Asked Questions</h2>
+                <button id="open-question-modal" class="btn btn-primary btn-sm" style="margin-top: 15px;">Ask a
+                    Question</button>
             </div>
+
+            <!-- Static default FAQs always visible -->
             <div class="faq-container" data-aos="fade-up" data-aos-delay="150">
                 <div class="faq-item">
                     <div class="faq-question">
@@ -316,8 +323,40 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Dynamic Q&As answered by the doctor -->
+            <div id="dynamic-qa" class="faq-container" style="margin-top: 10px;" data-aos="fade-up"
+                data-aos-delay="200">
+                <!-- Loaded by JS -->
+            </div>
+        </div>
+
+        <!-- Ask a Question Modal -->
+        <div id="question-modal"
+            style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+            <div
+                style="background:white; padding:30px; border-radius:12px; width:90%; max-width:500px; position:relative;">
+                <button id="close-question-modal"
+                    style="position:absolute; right:20px; top:20px; background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+                <h3 style="margin-bottom:20px;">Ask the Doctor</h3>
+                <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px;">Submit your dental question and the
+                    doctor will answer it. Approved answers may appear publicly on this page.</p>
+                <form id="question-form">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="q-name" required placeholder="Your Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Question</label>
+                        <textarea id="q-text" required rows="4"
+                            placeholder="e.g. How do I manage tooth sensitivity?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Submit Question</button>
+                </form>
+            </div>
         </div>
     </section>
+
 
     <!-- Appointment Section -->
     <section id="appointment" class="appointment">
@@ -342,7 +381,7 @@
                             <label for="phone">Phone Number</label>
                             <div class="input-wrapper">
                                 <i data-lucide="phone"></i>
-                                <input type="tel" id="phone" placeholder="+91 00000 00000" required>
+                                <input type="tel" id="phone" placeholder="+91 XXXXX XXXXX" required>
                             </div>
                         </div>
                     </div>
@@ -360,10 +399,11 @@
                                 <i data-lucide="clock"></i>
                                 <select id="time" required>
                                     <option value="" disabled selected>Select Time</option>
-                                    <option>10:00 AM - 12:00 PM</option>
-                                    <option>12:00 PM - 02:00 PM</option>
-                                    <option>04:00 PM - 06:00 PM</option>
-                                    <option>06:00 PM - 08:00 PM</option>
+                                    <option>2:00 PM - 3:00 PM</option>
+                                    <option>3:00 PM - 4:00 PM</option>
+                                    <option>4:00 PM - 5:00 PM</option>
+                                    <option>5:00 PM - 6:00 PM</option>
+                                    <option>6:00 PM - 7:00 PM</option>
                                 </select>
                             </div>
                         </div>
@@ -389,7 +429,7 @@
     <footer id="contact" class="footer">
         <div class="container footer-grid">
             <div class="footer-info">
-                <h3>Jeevan Deep <span style="color: var(--secondary)">Clinic</span></h3>
+                <h3>Jeevan Deep <span style="color: var(--secondary)">Clinic (Dental Clinic)</span></h3>
                 <p>A leading dental clinic committed to unparalleled excellence in patient care and painless restorative
                     treatments.</p>
                 <div class="contact-details">
@@ -400,10 +440,6 @@
                     <div class="contact-item">
                         <div class="icon-blob"><i data-lucide="phone" width="18px"></i></div>
                         <span>+91 83170 35904</span>
-                    </div>
-                    <div class="contact-item">
-                        <div class="icon-blob"><i data-lucide="mail" width="18px"></i></div>
-                        <span>info@jeevandeepclinic.com</span>
                     </div>
                 </div>
             </div>
@@ -420,18 +456,21 @@
                 <h4>Clinic Timings</h4>
                 <div class="hours-card">
                     <div class="hour-row">
-                        <span>Mon - Sat</span>
-                        <strong>10:00 AM - 07:00 PM</strong>
+                        <span>Mon - Tue, Thu - Sun</span>
+                        <strong>1:00PM - 07:00 PM</strong>
                     </div>
                     <div class="hour-row highlight">
-                        <span>Sunday</span>
+                        <span>Wednesday</span>
                         <strong>Closed</strong>
                     </div>
                 </div>
                 <div class="social-links mt-4">
-                    <a href="#" class="social-btn"><i data-lucide="facebook" width="18"></i></a>
-                    <a href="#" class="social-btn"><i data-lucide="instagram" width="18"></i></a>
-                    <a href="#" class="social-btn"><i data-lucide="twitter" width="18"></i></a>
+                    <a href="https://www.facebook.com" target="_blank" class="social-btn" title="Facebook"><i
+                            class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com" target="_blank" class="social-btn" title="Instagram"><i
+                            class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/918317035904" target="_blank" class="social-btn" title="WhatsApp"><i
+                            class="fa-brands fa-whatsapp"></i></a>
                 </div>
             </div>
         </div>

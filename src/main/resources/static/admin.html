@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard | Jeevan Deep Clinic</title>
-    
+    <title>Doctor Dashboard | Jeevan Deep Clinic (Dental Clinic)</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
         :root {
             --primary: #0f4c81;
@@ -19,7 +22,7 @@
             --bg-light: #f8fafc;
             --text-main: #334155;
             --border-color: #e2e8f0;
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
             font-family: 'Inter', sans-serif;
         }
 
@@ -90,7 +93,9 @@
             transition: 0.3s;
         }
 
-        .btn:hover { background: #0c3e69; }
+        .btn:hover {
+            background: #0c3e69;
+        }
 
         /* Dashboard Screen */
         #dashboard-screen {
@@ -113,7 +118,8 @@
             text-align: left;
         }
 
-        th, td {
+        th,
+        td {
             padding: 16px 20px;
             border-bottom: 1px solid var(--border-color);
         }
@@ -125,7 +131,9 @@
             font-weight: 600;
         }
 
-        tr:hover { background: #fdfdfd; }
+        tr:hover {
+            background: #fdfdfd;
+        }
 
         .empty-state {
             padding: 40px;
@@ -141,20 +149,114 @@
             font-size: 0.8rem;
             font-weight: bold;
         }
+
+        /* ---- Responsive: Mobile card layout for tables ---- */
+        @media (max-width: 768px) {
+            .header { padding: 14px 16px; }
+            .header h1 { font-size: 1.1rem; }
+            #dashboard-screen { padding: 16px; }
+
+            /* Hide thead and convert rows to cards */
+            .table-container table thead { display: none; }
+            .table-container table,
+            .table-container tbody,
+            .table-container tr,
+            .table-container td { display: block; width: 100%; box-sizing: border-box; }
+
+            .table-container tr {
+                background: white;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                padding: 12px 14px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+                border-bottom: none !important;
+            }
+            .table-container td {
+                padding: 5px 0;
+                border: none;
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                font-size: 0.88rem;
+                flex-wrap: wrap;
+            }
+            .table-container td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--primary);
+                min-width: 120px;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }
+            .tabs { flex-wrap: wrap; gap: 4px; }
+            .tab-btn { font-size: 0.9rem; padding: 8px 4px; }
+        }
+
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #166534;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 9999;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
     </style>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN9CZN9RRW"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-      gtag('config', 'G-SN9CZN9RRW');
+        gtag('config', 'G-SN9CZN9RRW');
     </script>
 </head>
-<body>
 
+<body>
+    <!-- Toast Notification -->
+    <div id="toast"></div>
+
+    <style>
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
     <div class="header">
         <h1><i data-lucide="shield"></i> Clinic Portal</h1>
         <div id="logout-btn" style="display:none; cursor:pointer; color: #ef4444;" onclick="logout()">
@@ -168,51 +270,158 @@
             <i data-lucide="lock" style="color: var(--primary); width: 48px; height: 48px;"></i>
             <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Doctor Login</h2>
             <p style="color: #64748b; font-size: 0.9rem;">Please enter your secure database password.</p>
-            
+
             <!-- Hardcoded username since only the doctor uses this -->
             <input type="hidden" name="username" value="doctor">
             <input type="password" name="password" id="passcode" placeholder="Enter Secure Password" required>
-            
+
             <button class="btn" type="submit">Access Records</button>
-            <div id="error-msg" style="color: red; margin-top: 10px; display: none;">Invalid password. Access denied.</div>
+            <div id="error-msg" style="color: red; margin-top: 10px; display: none;">Invalid password. Access denied.
+            </div>
         </form>
     </div>
 
     <!-- Dashboard -->
     <div id="dashboard-screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Upcoming Appointments</h2>
-            <button onclick="fetchAppointments()" class="btn" style="width: auto; background: var(--secondary);">
-                <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i> Refresh list
-            </button>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('appointments')">Appointments</button>
+            <button class="tab-btn" onclick="switchTab('reviews')">Patient Reviews</button>
+            <button class="tab-btn" onclick="switchTab('qa')">❓ Q&amp;A</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date Booked</th>
-                        <th>Patient Name</th>
-                        <th>Phone Number</th>
-                        <th>Preferred Slot</th>
-                        <th>Concern / Message</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-            <div id="empty-state" class="empty-state" style="display: none;">
-                <i data-lucide="calendar" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                <h3>No appointments found.</h3>
-                <p>When patients book via the website, they will appear here securely.</p>
+        <!-- Appointments Tab -->
+        <div id="tab-appointments" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Upcoming Appointments</h2>
+                <button onclick="fetchAppointments()" class="btn" style="width: auto; background: var(--secondary);">
+                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
+                    Refresh list
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date Booked</th>
+                            <th>Patient Name</th>
+                            <th>Phone Number</th>
+                            <th>Preferred Slot</th>
+                            <th>Concern / Message</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <i data-lucide="calendar" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <h3>No appointments found.</h3>
+                    <p>When patients book via the website, they will appear here securely.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Tab -->
+        <div id="tab-reviews" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Patient Reviews</h2>
+                <button onclick="fetchReviews()" class="btn" style="width: auto; background: var(--secondary);">
+                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
+                    Refresh list
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date Submitted</th>
+                            <th>Patient Name</th>
+                            <th>Rating</th>
+                            <th>Review</th>
+                            <th>Status (Actions)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviews-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+                <div id="reviews-empty-state" class="empty-state" style="display: none;">
+                    <i data-lucide="star" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <h3>No reviews found.</h3>
+                    <p>When patients submit reviews, they will appear here requiring approval.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Q&A Tab -->
+        <div id="tab-qa" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 4px;">Patient Questions</h2>
+                    <p style="color:#64748b; font-size:0.9rem; margin:0;">Answer questions and toggle which appear publicly in the FAQ section.</p>
+                </div>
+                <button onclick="fetchQA()" class="btn" style="width: auto; background: var(--secondary);">
+                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
+                    Refresh list
+                </button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr>
+                        <th>Date</th><th>Patient</th><th>Question</th><th>Answer</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody id="qa-table-body"></tbody>
+                </table>
+                <div id="qa-empty-state" class="empty-state" style="display:none;">
+                    <h3>No questions yet.</h3>
+                    <p>When patients submit questions, they'll appear here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" class="tab-content">
+            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 20px;">Change Admin Password</h2>
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 480px; box-shadow: var(--shadow-md);">
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 0.9rem;">Enter your current password and choose a new one. The new password will be saved and persist even after a server restart.</p>
+                <form id="change-password-form">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block; font-weight:600; margin-bottom:6px;">Current Password</label>
+                        <input type="password" id="cp-current" placeholder="Enter current password" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block; font-weight:600; margin-bottom:6px;">New Password</label>
+                        <input type="password" id="cp-new" placeholder="At least 6 characters" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required minlength="6">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; font-weight:600; margin-bottom:6px;">Confirm New Password</label>
+                        <input type="password" id="cp-confirm" placeholder="Repeat new password" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required minlength="6">
+                    </div>
+                    <div id="cp-message" style="margin-bottom:16px; display:none; padding: 10px 14px; border-radius:8px; font-size:0.9rem;"></div>
+                    <button type="submit" class="btn" style="width:100%;">Update Password</button>
+                </form>
             </div>
         </div>
     </div>
 
+
     <script>
         lucide.createIcons();
+
+        // Toast helper
+        let toastTimer;
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.background = isError ? '#991b1b' : '#166534';
+            toast.style.display = 'block';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
 
         // 1. Initial Load: Check if we are logged in or if there was an error
         document.addEventListener("DOMContentLoaded", () => {
@@ -220,10 +429,80 @@
             if (urlParams.get('error') === 'true') {
                 document.getElementById("error-msg").style.display = "block";
             }
-            
-            // Ping the API to see if Spring Security blocks us or lets us through
-            fetchAppointments();
+
+            // Restore the last active tab (default: appointments)
+            const lastTab = localStorage.getItem('activeAdminTab') || 'appointments';
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${lastTab}'`)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const tabEl = document.getElementById('tab-' + lastTab);
+            if (tabEl) tabEl.classList.add('active');
+
+            // Load the data for the restored tab
+            if (lastTab === 'reviews') fetchReviews();
+            else if (lastTab === 'qa') fetchQA();
+            else fetchAppointments();
+
+            // Change Password form handler
+            const cpForm = document.getElementById('change-password-form');
+            if (cpForm) {
+                cpForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const msgEl = document.getElementById('cp-message');
+                    const newPass = document.getElementById('cp-new').value;
+                    const confirmPass = document.getElementById('cp-confirm').value;
+
+                    if (newPass !== confirmPass) {
+                        msgEl.style.display = 'block';
+                        msgEl.style.background = '#fee2e2';
+                        msgEl.style.color = '#991b1b';
+                        msgEl.innerText = 'New passwords do not match.';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/admin/change-password', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                currentPassword: document.getElementById('cp-current').value,
+                                newPassword: newPass
+                            })
+                        });
+                        const result = await response.json();
+                        msgEl.style.display = 'block';
+                        if (response.ok) {
+                            msgEl.style.background = '#dcfce7';
+                            msgEl.style.color = '#166534';
+                            msgEl.innerText = '✅ ' + result.message + ' Redirecting to login...';
+                            cpForm.reset();
+                            // Logout and redirect to login page after 2 seconds
+                            setTimeout(() => {
+                                fetch('/perform_logout', { method: 'POST', credentials: 'same-origin' })
+                                    .finally(() => { window.location.href = '/admin.html'; });
+                            }, 2000);
+                        } else {
+                            msgEl.style.background = '#fee2e2';
+                            msgEl.style.color = '#991b1b';
+                            msgEl.innerText = result.error || 'Failed to update password.';
+                        }
+                    } catch (err) {
+                        msgEl.style.display = 'block';
+                        msgEl.style.background = '#fee2e2';
+                        msgEl.style.color = '#991b1b';
+                        msgEl.innerText = 'An error occurred. Please try again.';
+                    }
+                });
+            }
         });
+
 
         function logout() {
             // Send a hidden invisible form to the Spring logout endpoint
@@ -234,7 +513,7 @@
 
         async function fetchAppointments() {
             try {
-                const response = await fetch('/api/appointments');
+                const response = await fetch('/api/appointments', { credentials: 'same-origin' });
                 const contentType = response.headers.get("content-type");
 
                 // If Spring Security caught us, it redirects to HTML instead of JSON
@@ -265,23 +544,186 @@
                         const formattedCreatedDate = isNaN(dateObj) ? 'Just now' : dateObj.toLocaleString();
 
                         row.innerHTML = `
-                            <td style="color: #64748b; font-size: 0.85rem;">${formattedCreatedDate}</td>
-                            <td style="font-weight: 600;">${apt.name || '--'}</td>
-                            <td><a href="tel:${apt.phone}" style="color: var(--primary); text-decoration: underline;">${apt.phone}</a></td>
-                            <td>
-                                <strong style="display:block">${apt.preferredDate || '--'}</strong>
-                                <span style="font-size: 0.85rem; color: #64748b;">${apt.preferredTime || '--'}</span>
+                            <td data-label="Date Booked" style="color: #64748b; font-size: 0.85rem;">${formattedCreatedDate}</td>
+                            <td data-label="Patient Name" style="font-weight: 600;">${apt.name || '--'}</td>
+                            <td data-label="Phone"><a href="tel:${apt.phone}" style="color: var(--primary); text-decoration: underline;">${apt.phone}</a></td>
+                            <td data-label="Preferred Slot">
+                                <div>
+                                    <strong style="display:block">${apt.preferredDate || '--'}</strong>
+                                    <span style="font-size: 0.85rem; color: #64748b;">${apt.preferredTime || '--'}</span>
+                                </div>
                             </td>
-                            <td style="max-width: 300px;">${apt.message || '--'}</td>
-                            <td><span class="badge">New</span></td>
+                            <td data-label="Concern" style="max-width: 300px;">${apt.message || '--'}</td>
+                            <td data-label="Status"><span class="badge">New</span></td>
                         `;
                         tableBody.appendChild(row);
                     });
                 }
+                showToast(`✓ ${data.length} appointment(s) loaded.`);
             } catch (error) {
                 console.error("Error fetching appointments:", error);
+                showToast('Error loading appointments.', true);
+            }
+        } // end fetchAppointments
+
+        // --- Review & Q&A Tab Logic ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            // Persist the selected tab so refresh lands on the same one
+            localStorage.setItem('activeAdminTab', tabName);
+
+            if (tabName === 'reviews') fetchReviews();
+            else if (tabName === 'qa') fetchQA();
+            else if (tabName === 'appointments') fetchAppointments();
+        }
+
+        async function fetchQA() {
+            try {
+                const res = await fetch('/api/questions', { credentials: 'same-origin' });
+                if (!res.ok) { showToast('Could not load questions.', true); return; }
+                const questions = await res.json();
+                const tbody = document.getElementById('qa-table-body');
+                const empty = document.getElementById('qa-empty-state');
+                tbody.innerHTML = '';
+                if (questions.length === 0) { empty.style.display = 'block'; showToast('✓ No questions yet.'); return; }
+                empty.style.display = 'none';
+                questions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(q => {
+                    const row = document.createElement('tr');
+                    const answered = q.answerText && q.answerText.trim() !== '';
+                    const displayBadge = q.isDisplayed
+                        ? `<span class="badge" style="background:#dcfce7;color:#166534;">Shown</span>`
+                        : `<span class="badge" style="background:#f1f5f9;color:#64748b;">Hidden</span>`;
+                    row.innerHTML = `
+                        <td data-label="Date"><div style="font-size:0.85rem;color:#64748b;">${new Date(q.createdAt).toLocaleDateString()}</div></td>
+                        <td data-label="Patient"><strong>${q.patientName}</strong></td>
+                        <td data-label="Question" style="max-width:200px;">${q.questionText}</td>
+                        <td data-label="Answer">
+                            ${answered
+                                ? `<div style="max-width:200px;color:#166534;">${q.answerText}</div>`
+                                : `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                    <textarea id="ans-${q.id}" rows="2" style="width:180px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" placeholder="Type your answer..."></textarea>
+                                    <button onclick="submitAnswer(${q.id})" style="background:var(--secondary);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Save</button>
+                                  </div>`
+                            }
+                        </td>
+                        <td data-label="Actions">
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                ${displayBadge}
+                                ${answered ? `<button onclick="toggleDisplay(${q.id})" style="background:none;border:1px solid #e2e8f0;color:var(--primary);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:0.8rem;">${q.isDisplayed ? 'Hide' : 'Show'}</button>` : ''}
+                                <button onclick="deleteQA(${q.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Delete"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                            </div>
+                        </td>`;
+                tbody.appendChild(row);
+                });
+                lucide.createIcons();
+                showToast(`✓ ${questions.length} question(s) loaded.`);
+            } catch (e) { console.error(e); showToast('Error loading Q&A.', true); }
+        }
+
+        async function submitAnswer(id) {
+            const ansEl = document.getElementById(`ans-${id}`);
+            if (!ansEl || !ansEl.value.trim()) return;
+            await fetch(`/api/questions/${id}/answer`, { method: 'PUT', credentials: 'same-origin', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ answerText: ansEl.value }) });
+            showToast('✓ Answer saved successfully.');
+            fetchQA();
+        }
+
+        async function toggleDisplay(id) {
+            await fetch(`/api/questions/${id}/toggle-display`, { method: 'PUT', credentials: 'same-origin' });
+            showToast('✓ Display status updated.');
+            fetchQA();
+        }
+
+        async function deleteQA(id) {
+            if (!confirm('Delete this question?')) return;
+            await fetch(`/api/questions/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            showToast('✓ Question deleted.');
+            fetchQA();
+        }
+
+
+        async function fetchReviews() {
+            try {
+                const response = await fetch('/api/reviews', { credentials: 'same-origin' });
+                if (!response.ok) { showToast('Could not load reviews.', true); return; }
+
+                const reviews = await response.json();
+                const tableBody = document.getElementById('reviews-table-body');
+                const emptyState = document.getElementById('reviews-empty-state');
+
+                tableBody.innerHTML = "";
+
+                if (reviews.length === 0) {
+                    emptyState.style.display = "block";
+                    return;
+                }
+
+                emptyState.style.display = "none";
+
+                reviews.forEach(review => {
+                    const row = document.createElement("tr");
+
+                    const dateObj = new Date(review.createdAt);
+                    const formattedDate = dateObj.toLocaleDateString() + " " + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    const statusBadge = review.isApproved 
+                        ? `<span class="badge" style="background: #dcfce7; color: #166534;"><i data-lucide="check-circle" style="width:14px; display:inline-block; vertical-align:middle;"></i> Approved</span>`
+                        : `<span class="badge" style="background: #fef9c3; color: #854d0e;"><i data-lucide="clock" style="width:14px; display:inline-block; vertical-align:middle;"></i> Pending</span>`;
+                    
+                    const actionButtons = review.isApproved
+                        ? `<button onclick="deleteReview(${review.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Delete Review"><i data-lucide="trash-2"></i></button>`
+                        : `<button onclick="approveReview(${review.id})" style="background:none; border:none; color:#166534; cursor:pointer; margin-right: 15px;" title="Approve Review"><i data-lucide="check"></i> Approve</button>
+                           <button onclick="deleteReview(${review.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Delete Review"><i data-lucide="trash-2"></i> Delete</button>`;
+
+                    row.innerHTML = `
+                        <td data-label="Date Submitted"><div style="font-size: 0.9em; color: #64748b;">${formattedDate}</div></td>
+                        <td data-label="Patient Name"><strong>${review.patientName}</strong></td>
+                        <td data-label="Rating" style="color: #f59e0b;">${'★'.repeat(review.rating)}<span style="color: #cbd5e1;">${'★'.repeat(5-review.rating)}</span></td>
+                        <td data-label="Review"><div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${review.comment}">${review.comment}</div></td>
+                        <td data-label="Status">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                ${statusBadge}
+                                ${actionButtons}
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                lucide.createIcons();
+                showToast(`✓ ${reviews.length} review(s) loaded.`);
+            } catch (error) {
+                console.error("Error fetching reviews:", error);
+                showToast('Error loading reviews.', true);
+            }
+        }
+
+        async function approveReview(id) {
+            if(!confirm("Are you sure you want to approve this review? It will appear publicly on the website.")) return;
+            try {
+                await fetch(`/api/reviews/${id}/approve`, { method: 'PUT', credentials: 'same-origin' });
+                showToast('✓ Review approved!');
+                fetchReviews();
+            } catch (e) {
+                console.error(e);
+                showToast('Error approving review.', true);
+            }
+        }
+
+        async function deleteReview(id) {
+            if(!confirm("Are you sure you want to delete this review?")) return;
+            try {
+                await fetch(`/api/reviews/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+                showToast('✓ Review deleted.');
+                fetchReviews();
+            } catch (e) {
+                console.error(e);
+                showToast('Error deleting review.', true);
             }
         }
     </script>
 </body>
+
 </html>
