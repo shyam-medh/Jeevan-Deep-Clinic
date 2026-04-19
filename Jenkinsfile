@@ -1,10 +1,6 @@
 pipeline {
     agent { label 'clinic' }
 
-    triggers {
-        githubPush()
-    }
-
     environment {
         // The ID you gave your Docker credentials in Jenkins
         DOCKER_HUB_CREDENTIALS = credentials('dockerHubCred')
