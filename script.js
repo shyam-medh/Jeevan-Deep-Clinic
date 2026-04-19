@@ -47,49 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Form Submission
+    // Static Form Submission for Vercel
     const appointmentForm = document.getElementById('appointment-form');
     if (appointmentForm) {
-        appointmentForm.addEventListener('submit', async (e) => {
+        appointmentForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const submitBtn = appointmentForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = 'Booking...';
-            submitBtn.disabled = true;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const message = document.getElementById('message').value;
 
-            const appointmentData = {
-                name: document.getElementById('name').value,
-                phone: document.getElementById('phone').value,
-                preferredDate: document.getElementById('date').value,
-                preferredTime: document.getElementById('time').value,
-                message: document.getElementById('message').value
-            };
-
-            try {
-                const response = await fetch('/api/appointments', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(appointmentData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert(result.message || 'Appointment successfully booked!');
-                    appointmentForm.reset();
-                } else {
-                    alert('Failed to book appointment. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please check your connection and try again.');
-            } finally {
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-            }
+            const subject = encodeURIComponent(`New Appointment Request from ${name}`);
+            const body = encodeURIComponent(`Name: ${name}\nPhone: ${phone}\nDate: ${date}\nTime: ${time}\nMessage/Concern: ${message}`);
+            
+            window.location.href = `mailto:info@jeevandeepclinic.com?subject=${subject}&body=${body}`;
+            
+            alert('Your email client has been opened to send the request securely!');
+            appointmentForm.reset();
         });
     }
 
