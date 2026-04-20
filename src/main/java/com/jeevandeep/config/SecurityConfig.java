@@ -26,7 +26,8 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests((authz) -> authz
-                        .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html", "/actuator/health")
+                        .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html",
+                                "/actuator/health")
                         .permitAll()
                         .antMatchers(HttpMethod.POST, "/api/appointments", "/api/reviews", "/api/questions").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/reviews/public", "/api/questions/public").permitAll()
@@ -65,9 +66,9 @@ public class SecurityConfig {
                     .roles("ADMIN")
                     .build();
         } else {
-            // Fall back to the default password: jeevan123
+            // Fall back to the default password: shyam123
             doctor = User.withUsername("doctor")
-                    .password(encoder.encode("jeevan123"))
+                    .password(encoder.encode("shyam123"))
                     .roles("ADMIN")
                     .build();
         }
