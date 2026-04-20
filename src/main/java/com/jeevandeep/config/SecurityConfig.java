@@ -26,7 +26,7 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests((authz) -> authz
-                        .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html")
+                        .antMatchers("/", "/index.html", "/style.css", "/script.js", "/images/**", "/admin.html", "/actuator/health")
                         .permitAll()
                         .antMatchers(HttpMethod.POST, "/api/appointments", "/api/reviews", "/api/questions").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/reviews/public", "/api/questions/public").permitAll()

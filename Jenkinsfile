@@ -107,6 +107,8 @@ pipeline {
 
                     // 2. Wait for Spring Boot to boot (Smart Health Check)
                     echo "Waiting for ${newContainer} to become healthy..."
+                    sleep 5 // Give it a 5s head start
+                    
                     def isHealthy = false
                     def timeout = 60 // 60 seconds max
                     while (timeout > 0) {
@@ -122,9 +124,10 @@ pipeline {
                     }
 
                     if (!isHealthy) {
-                        echo "❌ Container failed to become healthy. Aborting deployment."
+                        echo "❌ Container failed to become healthy. Dumping logs..."
+                        sh "docker logs ${newContainer}"
                         sh "docker stop ${newContainer} && docker rm ${newContainer}"
-                        error "Deployment failed: Health check timeout"
+                        error "Deployment failed: Health check timeout. Review logs above."
                     }
 
                     // 3. Switch Nginx traffic to the new container
