@@ -18,6 +18,10 @@ pipeline {
         DB_USER                = 'root'
         DB_PASS                = 'password'
         NETWORK_NAME           = 'mkt-project_clinic-network' 
+
+        // Domain and SSL Setup
+        DOMAIN_NAME            = 'jeevandeep.clinic'
+        EMAIL                  = 'baranwal07shyam@gmail.com'
     }
 
     stages {
@@ -130,25 +134,68 @@ pipeline {
                         error "Deployment failed: Health check timeout. Review logs above."
                     }
 
-                    // 3. Switch Nginx traffic to the new container
-                    echo "Switching Nginx traffic to port ${newPort}..."
-                    sh '''
-                        cat > nginx_temp.conf <<'NGINXEOF'
+                    // 3. Switch Nginx traffic to the new container & Ensure SSL
+                    echo "Switching Nginx traffic for ${DOMAIN_NAME} to port ${newPort}..."
+                    sh """
+                        # Install Certbot if missing
+                        if ! command -v certbot &> /dev/null; then
+                            echo "Installing Certbot..."
+                            sudo apt-get update && sudo apt-get install -y certbot python3-certbot-nginx
+                        fi
+
+                        # Check if SSL certificate already exists
+                        if [ -f "/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+                            echo "SSL Certificate found. Configuring HTTPS..."
+                            cat > nginx_temp.conf <<'NGINXEOF'
 server {
     listen 80;
-    server_name _;
+    server_name ${DOMAIN_NAME};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN_NAME};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;
+
     location / {
         proxy_pass http://127.0.0.1:NEWPORT;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 NGINXEOF
+                        else
+                            echo "No SSL Certificate. Configuring HTTP and attempting to generate cert..."
+                            cat > nginx_temp.conf <<'NGINXEOF'
+server {
+    listen 80;
+    server_name ${DOMAIN_NAME};
+    location / {
+        proxy_pass http://127.0.0.1:NEWPORT;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+NGINXEOF
+                        fi
+
                         sudo mv nginx_temp.conf /etc/nginx/sites-available/default
                         sudo nginx -t && sudo systemctl reload nginx
-                    '''.replace('NEWPORT', newPort)
+
+                        # Attempt to get SSL certificate if it doesn't exist
+                        if [ ! -f "/etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem" ]; then
+                            echo "Running initial Certbot for ${DOMAIN_NAME}..."
+                            sudo certbot --nginx -d ${DOMAIN_NAME} --non-interactive --agree-tos -m ${EMAIL}
+                            sudo systemctl reload nginx
+                        fi
+                    """.replace('NEWPORT', newPort)
 
                     // 4. Stop the old container
                     if (isBlueRunning) {
