@@ -48,12 +48,28 @@ pipeline {
             }
         }
 
-        stage('Ensure Database Up') {
+        stage('Ensure Infrastructure') {
             steps {
                 script {
-                    echo 'Starting/Verifying database container...'
-                    // Using 'docker compose' (V2) instead of 'docker-compose'
-                    sh 'docker compose up -d db'
+                    echo 'Checking Docker Network...'
+                    sh "docker network inspect ${NETWORK_NAME} >/dev/null 2>&1 || docker network create ${NETWORK_NAME}"
+                    
+                    echo 'Ensuring MySQL Database is running...'
+                    def isDbRunning = sh(script: "docker ps | grep ${DB_HOST} || true", returnStdout: true).trim()
+                    if (!isDbRunning) {
+                        echo 'Starting fresh MySQL container...'
+                        sh """
+                            docker run -d --name ${DB_HOST} \
+                                --network ${NETWORK_NAME} \
+                                --restart unless-stopped \
+                                -v clinic-data:/var/lib/mysql \
+                                -e MYSQL_DATABASE=${DB_NAME} \
+                                -e MYSQL_ROOT_PASSWORD=${DB_PASS} \
+                                mysql:8.0
+                        """
+                    } else {
+                        echo 'MySQL container already running.'
+                    }
                 }
             }
         }
