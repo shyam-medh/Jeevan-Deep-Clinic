@@ -20,7 +20,7 @@ pipeline {
         NETWORK_NAME           = 'mkt-project_clinic-network' 
 
         // Domain and SSL Setup
-        DOMAIN_NAME            = 'jeevandeep.clinic'
+        DOMAIN_NAME            = 'jeevandeepclinic.casacam.net'
         EMAIL                  = 'baranwal07shyam@gmail.com'
     }
 
