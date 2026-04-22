@@ -89,7 +89,6 @@ Push to `main` branch → GitHub webhook triggers Jenkins → Automated Blue-Gre
 
 ---
 
-
 ## 📁 Project Structure
 
 ```text
