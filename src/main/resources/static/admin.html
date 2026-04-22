@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard | Jeevan Deep Clinic (Dental Clinic)</title>
+    <title>Doctor Dashboard | Jeevan Deep Clinic (Dental & Eye Clinic)</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -287,6 +287,7 @@
             <button class="tab-btn active" onclick="switchTab('appointments')">Appointments</button>
             <button class="tab-btn" onclick="switchTab('reviews')">Patient Reviews</button>
             <button class="tab-btn" onclick="switchTab('qa')">❓ Q&amp;A</button>
+            <button class="tab-btn" onclick="switchTab('blogs')">📝 Blogs</button>
             <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
         </div>
 
@@ -380,6 +381,68 @@
                     <h3>No questions yet.</h3>
                     <p>When patients submit questions, they'll appear here.</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Blogs Tab -->
+        <div id="tab-blogs" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 4px;">Manage Blog Posts</h2>
+                    <p style="color:#64748b; font-size:0.9rem; margin:0;">Publish new articles or delete existing ones from the biological blog.</p>
+                </div>
+                <button onclick="fetchBlogs()" class="btn" style="width: auto; background: var(--secondary);">
+                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
+                    Refresh list
+                </button>
+            </div>
+            
+            <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-md); margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: var(--primary);">Publish New Post</h3>
+                <form id="blog-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display:block; font-weight:600; margin-bottom:5px;">Title</label>
+                            <input type="text" id="blog-title" placeholder="E.g. The Anatomy of a Tooth" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required>
+                        </div>
+                        <div>
+                            <label style="display:block; font-weight:600; margin-bottom:5px;">Category</label>
+                            <input type="text" id="blog-category" placeholder="E.g. Oral Biology" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display:block; font-weight:600; margin-bottom:5px;">Blog Image (Optional)</label>
+                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                            <button type="button" id="img-mode-url" onclick="setImageMode('url')" style="padding:8px 16px; border:2px solid var(--primary); background:var(--primary); color:white; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Paste URL</button>
+                            <button type="button" id="img-mode-file" onclick="setImageMode('file')" style="padding:8px 16px; border:2px solid var(--primary); background:white; color:var(--primary); border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Upload from Gallery</button>
+                        </div>
+                        <div id="img-url-input">
+                            <input type="url" id="blog-image" placeholder="https://images.unsplash.com/..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
+                        </div>
+                        <div id="img-file-input" style="display:none;">
+                            <input type="file" id="blog-image-file" accept="image/*" onchange="previewImage(this)" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:white;">
+                            <img id="blog-image-preview" src="" alt="Preview" style="display:none; margin-top:8px; max-width:200px; max-height:150px; border-radius:8px; border:1px solid #e2e8f0; object-fit:cover;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display:block; font-weight:600; margin-bottom:5px;">Short Excerpt</label>
+                        <textarea id="blog-excerpt" rows="2" placeholder="A brief summary for the card view..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required></textarea>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display:block; font-weight:600; margin-bottom:5px;">Full Content</label>
+                        <textarea id="blog-content" rows="6" placeholder="The detailed biological article content..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Publish Post</button>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr>
+                        <th>Date</th><th>Image</th><th>Title</th><th>Category</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody id="blogs-table-body"></tbody>
+                </table>
             </div>
         </div>
 
@@ -577,7 +640,112 @@
 
             if (tabName === 'reviews') fetchReviews();
             else if (tabName === 'qa') fetchQA();
+            else if (tabName === 'blogs') fetchBlogs();
             else if (tabName === 'appointments') fetchAppointments();
+        }
+
+        // --- Blog Image Mode Toggle ---
+        var blogImageBase64 = '';
+
+        function setImageMode(mode) {
+            var urlBtn = document.getElementById('img-mode-url');
+            var fileBtn = document.getElementById('img-mode-file');
+            var urlInput = document.getElementById('img-url-input');
+            var fileInput = document.getElementById('img-file-input');
+            if (mode === 'url') {
+                urlBtn.style.background = 'var(--primary)'; urlBtn.style.color = 'white';
+                fileBtn.style.background = 'white'; fileBtn.style.color = 'var(--primary)';
+                urlInput.style.display = 'block'; fileInput.style.display = 'none';
+                blogImageBase64 = '';
+            } else {
+                fileBtn.style.background = 'var(--primary)'; fileBtn.style.color = 'white';
+                urlBtn.style.background = 'white'; urlBtn.style.color = 'var(--primary)';
+                fileInput.style.display = 'block'; urlInput.style.display = 'none';
+                document.getElementById('blog-image').value = '';
+            }
+        }
+
+        function previewImage(input) {
+            var preview = document.getElementById('blog-image-preview');
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    blogImageBase64 = e.target.result;
+                    preview.src = blogImageBase64;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.style.display = 'none';
+                blogImageBase64 = '';
+            }
+        }
+
+        // --- Blog Logic ---
+        document.getElementById('blog-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            var imageUrl = blogImageBase64 || document.getElementById('blog-image').value;
+            const payload = {
+                title: document.getElementById('blog-title').value,
+                category: document.getElementById('blog-category').value,
+                imageUrl: imageUrl,
+                excerpt: document.getElementById('blog-excerpt').value,
+                content: document.getElementById('blog-content').value
+            };
+            try {
+                const res = await fetch('/api/blogs', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    showToast('✓ Blog published successfully.');
+                    document.getElementById('blog-form').reset();
+                    blogImageBase64 = '';
+                    document.getElementById('blog-image-preview').style.display = 'none';
+                    setImageMode('url');
+                    fetchBlogs();
+                } else {
+                    showToast('Failed to publish blog.', true);
+                }
+            } catch (err) {
+                showToast('Error publishing blog.', true);
+            }
+        });
+
+        async function fetchBlogs() {
+            try {
+                const res = await fetch('/api/blogs', { credentials: 'same-origin' });
+                if (!res.ok) { showToast('Could not load blogs.', true); return; }
+                const blogs = await res.json();
+                const tbody = document.getElementById('blogs-table-body');
+                tbody.innerHTML = '';
+                
+                blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(b => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td data-label="Date"><div style="font-size:0.85rem;color:#64748b;">${new Date(b.createdAt).toLocaleDateString()}</div></td>
+                        <td data-label="Image"><img src="${b.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" onerror="this.src='https://via.placeholder.com/50';"></td>
+                        <td data-label="Title" style="font-weight: 600;">${b.title}</td>
+                        <td data-label="Category"><span class="badge" style="background:var(--primary-light); color:var(--primary);">${b.category}</span></td>
+                        <td data-label="Actions">
+                            <button onclick="deleteBlog(${b.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Delete"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                        </td>`;
+                    tbody.appendChild(row);
+                });
+                lucide.createIcons();
+                showToast(`✓ ${blogs.length} blog(s) loaded.`);
+            } catch (e) {
+                console.error(e);
+                showToast('Error loading blogs.', true);
+            }
+        }
+
+        async function deleteBlog(id) {
+            if (!confirm('Are you sure you want to delete this blog post?')) return;
+            try {
+                await fetch(`/api/blogs/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+                showToast('✓ Blog deleted.');
+                fetchBlogs();
+            } catch (e) {
+                showToast('Error deleting blog.', true);
+            }
         }
 
         async function fetchQA() {

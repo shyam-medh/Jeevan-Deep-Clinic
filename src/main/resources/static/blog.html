@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Jeevan Deep Clinic (Dental & Eye Clinic)</title>
+    <meta name="description" content="Read our latest dental health insights, tips, and articles from the experts at Jeevan Deep Clinic.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN9CZN9RRW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-SN9CZN9RRW');
+    </script>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar transition-all" id="navbar">
+        <div class="container nav-container">
+            <div class="logo">
+                <a href="index.html" style="text-decoration: none; color: inherit;">
+                    <span class="logo-text">Jeevan Deep Clinic<br>
+                        <span class="highlight" style="font-size: 0.6em; font-weight: 500; display: block; margin-top: -5px;">(Dental & Eye Clinic)</span>
+                    </span>
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#home">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#services">Services</a></li>
+                <li><a href="index.html#gallery">Gallery</a></li>
+                <li><a href="blog.html" class="active">Blog</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+                <li><a href="index.html#appointment" class="btn btn-primary btn-sm">Book Appointment</a></li>
+            </ul>
+            <div class="mobile-menu-btn" id="mobile-menu-btn">
+                <i data-lucide="menu"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div id="google_translate_element" style="position:fixed; top:-200px; left:0; width:300px; height:80px; opacity:0.01; z-index:-1;"></div>
+
+    <!-- Language Welcome Popup -->
+    <div class="lang-popup-overlay" id="lang-popup-overlay">
+        <div class="lang-popup">
+            <div class="lang-popup-icon">🌐</div>
+            <h3 class="lang-popup-title">Choose Your Language / अपनी भाषा चुनें</h3>
+            <p class="lang-popup-subtitle">Select the language you'd like to browse in</p>
+            <div class="lang-popup-buttons">
+                <button class="lang-popup-btn" onclick="selectLanguage('en')">
+                    <span class="lang-popup-btn-label">English</span>
+                    <span class="lang-popup-btn-sub">Continue in English</span>
+                </button>
+                <button class="lang-popup-btn" onclick="selectLanguage('hi')">
+                    <span class="lang-popup-btn-label">हिंदी</span>
+                    <span class="lang-popup-btn-sub">हिंदी में जारी रखें</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Language Switch Button -->
+    <button class="floating-lang-btn" id="floating-lang-btn" onclick="toggleLangMenu()" title="Change Language">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span class="floating-lang-label" id="floating-lang-label">Language</span>
+    </button>
+    <div class="floating-lang-menu" id="floating-lang-menu">
+        <button class="floating-lang-option active" id="fl-en" onclick="switchLanguage('en')">🇬🇧 English</button>
+        <button class="floating-lang-option" id="fl-hi" onclick="switchLanguage('hi')">🇮🇳 हिंदी</button>
+    </div>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        function whenTranslateReady(callback) {
+            var combo = document.querySelector('.goog-te-combo');
+            if (combo) { callback(combo); return; }
+            var observer = new MutationObserver(function() {
+                var combo = document.querySelector('.goog-te-combo');
+                if (combo) { observer.disconnect(); callback(combo); }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+            setTimeout(function() { observer.disconnect(); }, 15000);
+        }
+
+        function triggerTranslation(lang) {
+            whenTranslateReady(function(combo) {
+                for (var i = 0; i < combo.options.length; i++) {
+                    if (combo.options[i].value === lang) { combo.selectedIndex = i; break; }
+                }
+                combo.value = lang;
+                combo.dispatchEvent(new Event('change', { bubbles: true }));
+                try { var evt = document.createEvent('HTMLEvents'); evt.initEvent('change', true, true); combo.dispatchEvent(evt); } catch(e) {}
+                if (typeof combo.onchange === 'function') { combo.onchange(); }
+                setTimeout(function() {
+                    try {
+                        var frames = document.querySelectorAll('.goog-te-menu-frame');
+                        for (var f = 0; f < frames.length; f++) {
+                            var doc = frames[f].contentDocument || frames[f].contentWindow.document;
+                            var items = doc.querySelectorAll('.goog-te-menu2-item');
+                            for (var j = 0; j < items.length; j++) {
+                                var text = items[j].textContent || '';
+                                if ((lang === 'hi' && text.indexOf('Hindi') >= 0) || (lang === 'en' && text.indexOf('English') >= 0)) { items[j].click(); break; }
+                            }
+                        }
+                    } catch(e) {}
+                }, 100);
+                updateFloatingUI(lang);
+            });
+        }
+
+        function updateFloatingUI(lang) {
+            var label = document.getElementById('floating-lang-label');
+            if (label) label.textContent = lang === 'hi' ? '\u092D\u093E\u0937\u093E' : 'Language';
+            document.querySelectorAll('.floating-lang-option').forEach(function(b) { b.classList.remove('active'); });
+            var el = document.getElementById('fl-' + lang);
+            if (el) el.classList.add('active');
+        }
+
+        function selectLanguage(lang) {
+            localStorage.setItem('jdc_lang', lang);
+            document.getElementById('lang-popup-overlay').classList.remove('show');
+            if (lang === 'hi') { triggerTranslation('hi'); }
+        }
+
+        function switchLanguage(lang) {
+            localStorage.setItem('jdc_lang', lang);
+            document.getElementById('floating-lang-menu').classList.remove('show');
+            triggerTranslation(lang);
+        }
+
+        function toggleLangMenu() { document.getElementById('floating-lang-menu').classList.toggle('show'); }
+
+        document.addEventListener('click', function(e) {
+            var menu = document.getElementById('floating-lang-menu');
+            var btn = document.getElementById('floating-lang-btn');
+            if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) { menu.classList.remove('show'); }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var savedLang = localStorage.getItem('jdc_lang');
+            if (!savedLang) {
+                setTimeout(function() { document.getElementById('lang-popup-overlay').classList.add('show'); }, 800);
+            } else if (savedLang === 'hi') {
+                triggerTranslation('hi');
+            }
+            updateFloatingUI(savedLang || 'en');
+        });
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <!-- Hero Section for Blog -->
+    <section class="hero blog-hero">
+        <div class="hero-bg-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+        </div>
+        <div class="container hero-container" style="text-align: center; justify-content: center;">
+            <div class="hero-content" style="max-width: 800px; margin: 0 auto; text-align: center;" data-aos="fade-up" data-aos-duration="1000">
+                <span class="badge"><i data-lucide="microscope" width="16" height="16"></i> Biological Insights</span>
+                <h1>Oral Health <span class="text-gradient">Journal</span></h1>
+                <p>Deep dives into the science of smiles, oral ecosystems, and preventive dental medicine.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Listing Section -->
+    <section class="blog-section py-5">
+        <div class="container">
+            <div id="dynamic-blogs" class="blog-grid">
+                <!-- Dynamically loaded blogs will appear here -->
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i data-lucide="loader" class="fa-spin" style="width: 32px; height: 32px;"></i>
+                    <p>Loading biological insights...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Article Modal -->
+    <div id="article-modal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.85); z-index:2000; align-items:center; justify-content:center; padding: 20px;">
+        <div style="background:white; border-radius:12px; width:100%; max-width:800px; max-height:90vh; overflow-y:auto; position:relative; display:flex; flex-direction:column; box-shadow: var(--shadow-xl);">
+            <button id="close-article" style="position:absolute; right:20px; top:20px; background:white; border:none; width:40px; height:40px; border-radius:50%; box-shadow:0 2px 10px rgba(0,0,0,0.1); font-size:24px; cursor:pointer; z-index: 10; display:flex; align-items:center; justify-content:center; color: var(--text-main);">&times;</button>
+            <img id="modal-img" src="" alt="Article Image" style="width:100%; height:300px; object-fit:cover;">
+            <div style="padding: 40px;">
+                <span id="modal-category" class="badge" style="background:var(--primary-light); color:var(--primary); margin-bottom:15px; display:inline-block;"></span>
+                <h2 id="modal-title" style="font-size:2rem; color:var(--primary); margin-bottom:15px; line-height:1.2;"></h2>
+                <div class="blog-meta" style="border-bottom:1px solid var(--border-color); padding-bottom:20px; margin-bottom:20px;">
+                    <span><i data-lucide="calendar" width="14"></i> <span id="modal-date"></span></span>
+                    <span><i data-lucide="user" width="14"></i> <span id="modal-author"></span></span>
+                </div>
+                <div id="modal-content" style="font-size:1.05rem; line-height:1.8; color:var(--text-main); white-space: pre-wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Contact Button -->
+    <div class="floating-contact">
+        <a href="tel:+918317035904" class="floating-icon" title="Call Us Now">
+            <i data-lucide="phone-call"></i>
+        </a>
+        <a href="https://wa.me/918317035904" target="_blank" class="floating-icon whatsapp" title="Chat on WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+    </div>
+
+    <!-- Contact & Footer -->
+    <footer id="contact" class="footer">
+        <!-- Reusing existing footer content -->
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <h3>Jeevan Deep <span style="color: var(--secondary)">Clinic (Dental & Eye Clinic)</span></h3>
+                <p>A leading dental & eye clinic committed to unparalleled excellence in patient care and painless restorative treatments.</p>
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <div class="icon-blob"><i data-lucide="map-pin" width="18px"></i></div>
+                        <span>Jeevan Deep Clinic, Dental and Eye, Bankat</span>
+                    </div>
+                    <div class="contact-item">
+                        <div class="icon-blob"><i data-lucide="phone" width="18px"></i></div>
+                        <span>+91 83170 35904</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Quick Menu</h4>
+                <ul>
+                    <li><a href="index.html#home"><i data-lucide="chevron-right" width="14"></i> Home</a></li>
+                    <li><a href="index.html#about"><i data-lucide="chevron-right" width="14"></i> About Us</a></li>
+                    <li><a href="index.html#services"><i data-lucide="chevron-right" width="14"></i> Dental Services</a></li>
+                    <li><a href="index.html#gallery"><i data-lucide="chevron-right" width="14"></i> Clinic Gallery</a></li>
+                </ul>
+            </div>
+            <div class="footer-hours">
+                <h4>Clinic Timings</h4>
+                <div class="hours-card">
+                    <div class="hour-row">
+                        <span>Mon - Tue, Thu - Sun</span>
+                        <strong>1:00PM - 07:00 PM</strong>
+                    </div>
+                    <div class="hour-row highlight">
+                        <span>Wednesday</span>
+                        <strong>Closed</strong>
+                    </div>
+                </div>
+                <div class="social-links mt-4">
+                    <a href="https://www.facebook.com" target="_blank" class="social-btn" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com" target="_blank" class="social-btn" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/918317035904" target="_blank" class="social-btn" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="map-container">
+            <iframe src="https://maps.google.com/maps?q=Jeevan+Deep+Clinic+Dental+and+Eye+Bankat&hl=en&z=15&output=embed" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" title="Location Map"></iframe>
+        </div>
+        <div class="footer-bottom">
+            <div class="container d-flex justify-between">
+                <p>&copy; 2026 Jeevan Deep Clinic. All rights reserved.</p>
+                <p>Designed with ❤️ for exceptional care.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true, offset: 50 });
+        lucide.createIcons();
+
+        // Fetch and render blogs
+        async function loadBlogs() {
+            try {
+                const res = await fetch('/api/blogs');
+                const blogs = await res.json();
+                const container = document.getElementById('dynamic-blogs');
+                container.innerHTML = '';
+
+                if (blogs.length === 0) {
+                    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px;"><p>Check back later for new biological insights!</p></div>`;
+                    return;
+                }
+
+                // Sort newest first
+                blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                blogs.forEach((blog, index) => {
+                    const delay = index * 100;
+                    const date = new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    
+                    const article = document.createElement('article');
+                    article.className = 'blog-card';
+                    article.setAttribute('data-aos', 'fade-up');
+                    article.setAttribute('data-aos-delay', delay);
+                    article.innerHTML = `
+                        <div class="blog-img-wrapper">
+                            <img src="${blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}" alt="${blog.title}">
+                            <div class="blog-category">${blog.category}</div>
+                        </div>
+                        <div class="blog-content">
+                            <div class="blog-meta">
+                                <span><i data-lucide="calendar" width="14"></i> ${date}</span>
+                                <span><i data-lucide="user" width="14"></i> ${blog.author}</span>
+                            </div>
+                            <h3>${blog.title}</h3>
+                            <p>${blog.excerpt}</p>
+                            <button class="btn btn-outline btn-sm mt-3 read-more-btn" onclick='openArticle(${JSON.stringify(blog).replace(/'/g, "&apos;")})'>Read Article</button>
+                        </div>
+                    `;
+                    container.appendChild(article);
+                });
+                lucide.createIcons();
+            } catch (e) {
+                console.error("Failed to load blogs", e);
+            }
+        }
+
+        function openArticle(blog) {
+            document.getElementById('modal-img').src = blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+            document.getElementById('modal-category').innerText = blog.category;
+            document.getElementById('modal-title').innerText = blog.title;
+            document.getElementById('modal-date').innerText = new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('modal-author').innerText = blog.author;
+            document.getElementById('modal-content').innerText = blog.content;
+            
+            document.getElementById('article-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        document.getElementById('close-article').addEventListener('click', () => {
+            document.getElementById('article-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        });
+
+        document.addEventListener('DOMContentLoaded', loadBlogs);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
+

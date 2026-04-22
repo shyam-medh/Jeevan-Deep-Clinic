@@ -160,6 +160,8 @@ server {
     ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;
 
+    client_max_body_size 15M;
+
     location / {
         proxy_pass http://127.0.0.1:NEWPORT;
         proxy_set_header Host \$host;
@@ -175,6 +177,9 @@ NGINXEOF
 server {
     listen 80;
     server_name ${DOMAIN_NAME};
+
+    client_max_body_size 15M;
+
     location / {
         proxy_pass http://127.0.0.1:NEWPORT;
         proxy_set_header Host \$host;

@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jeevan Deep Clinic (Dental Clinic)| Caring for Your Smile with Trust & Precision</title>
+    <title>Jeevan Deep Clinic (Dental & Eye Clinic)| Caring for Your Smile with Trust & Precision</title>
     <meta name="description"
-        content="Jeevan Deep Clinic - Reliable, affordable, and painless dental treatment in a hygienic environment. Book your appointment today for a healthy smile.">
+        content="Jeevan Deep Clinic - Reliable, affordable, and painless dental & eye treatment in a hygienic environment. Book your appointment today for a healthy smile.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,13 +43,16 @@
     <nav class="navbar transition-all" id="navbar">
         <div class="container nav-container">
             <div class="logo">
-                <span class="logo-text">Jeevan Deep Clinic <span class="highlight">(Dental Clinic)</span></span>
+                <span class="logo-text">Jeevan Deep Clinic<br>
+                    <span class="highlight" style="font-size: 0.6em; font-weight: 500; display: block; margin-top: -5px;">(Dental & Eye Clinic)</span>
+                </span>
             </div>
             <ul class="nav-links">
                 <li><a href="#home" class="active">Home</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
                 <li><a href="#gallery">Gallery</a></li>
+                <li><a href="blog.html">Blog</a></li>
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="#appointment" class="btn btn-primary btn-sm">Book Appointment</a></li>
             </ul>
@@ -58,6 +61,134 @@
             </div>
         </div>
     </nav>
+
+    <!-- Google Translate Container — needs real space to render, hidden above viewport -->
+    <div id="google_translate_element" style="position:fixed; top:-200px; left:0; width:300px; height:80px; opacity:0.01; z-index:-1;"></div>
+
+    <!-- Language Welcome Popup -->
+    <div class="lang-popup-overlay" id="lang-popup-overlay">
+        <div class="lang-popup">
+            <div class="lang-popup-icon">🌐</div>
+            <h3 class="lang-popup-title">Choose Your Language / अपनी भाषा चुनें</h3>
+            <p class="lang-popup-subtitle">Select the language you'd like to browse in</p>
+            <div class="lang-popup-buttons">
+                <button class="lang-popup-btn" onclick="selectLanguage('en')">
+                    <span class="lang-popup-btn-label">English</span>
+                    <span class="lang-popup-btn-sub">Continue in English</span>
+                </button>
+                <button class="lang-popup-btn" onclick="selectLanguage('hi')">
+                    <span class="lang-popup-btn-label">हिंदी</span>
+                    <span class="lang-popup-btn-sub">हिंदी में जारी रखें</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Language Switch Button -->
+    <button class="floating-lang-btn" id="floating-lang-btn" onclick="toggleLangMenu()" title="Change Language">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span class="floating-lang-label" id="floating-lang-label">Language</span>
+    </button>
+    <div class="floating-lang-menu" id="floating-lang-menu">
+        <button class="floating-lang-option active" id="fl-en" onclick="switchLanguage('en')">🇬🇧 English</button>
+        <button class="floating-lang-option" id="fl-hi" onclick="switchLanguage('hi')">🇮🇳 हिंदी</button>
+    </div>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        function whenTranslateReady(callback) {
+            var combo = document.querySelector('.goog-te-combo');
+            if (combo) { callback(combo); return; }
+            var observer = new MutationObserver(function() {
+                var combo = document.querySelector('.goog-te-combo');
+                if (combo) { observer.disconnect(); callback(combo); }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+            setTimeout(function() { observer.disconnect(); }, 15000);
+        }
+
+        function triggerTranslation(lang) {
+            whenTranslateReady(function(combo) {
+                for (var i = 0; i < combo.options.length; i++) {
+                    if (combo.options[i].value === lang) {
+                        combo.selectedIndex = i;
+                        break;
+                    }
+                }
+                combo.value = lang;
+                combo.dispatchEvent(new Event('change', { bubbles: true }));
+                try {
+                    var evt = document.createEvent('HTMLEvents');
+                    evt.initEvent('change', true, true);
+                    combo.dispatchEvent(evt);
+                } catch(e) {}
+                if (typeof combo.onchange === 'function') { combo.onchange(); }
+                setTimeout(function() {
+                    try {
+                        var frames = document.querySelectorAll('.goog-te-menu-frame');
+                        for (var f = 0; f < frames.length; f++) {
+                            var doc = frames[f].contentDocument || frames[f].contentWindow.document;
+                            var items = doc.querySelectorAll('.goog-te-menu2-item');
+                            for (var j = 0; j < items.length; j++) {
+                                var text = items[j].textContent || '';
+                                if ((lang === 'hi' && text.indexOf('Hindi') >= 0) || (lang === 'en' && text.indexOf('English') >= 0)) {
+                                    items[j].click();
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                }, 100);
+                updateFloatingUI(lang);
+            });
+        }
+
+        function updateFloatingUI(lang) {
+            var label = document.getElementById('floating-lang-label');
+            if (label) label.textContent = lang === 'hi' ? '\u092D\u093E\u0937\u093E' : 'Language';
+            document.querySelectorAll('.floating-lang-option').forEach(function(b) { b.classList.remove('active'); });
+            var el = document.getElementById('fl-' + lang);
+            if (el) el.classList.add('active');
+        }
+
+        function selectLanguage(lang) {
+            localStorage.setItem('jdc_lang', lang);
+            document.getElementById('lang-popup-overlay').classList.remove('show');
+            if (lang === 'hi') { triggerTranslation('hi'); }
+        }
+
+        function switchLanguage(lang) {
+            localStorage.setItem('jdc_lang', lang);
+            document.getElementById('floating-lang-menu').classList.remove('show');
+            triggerTranslation(lang);
+        }
+
+        function toggleLangMenu() { document.getElementById('floating-lang-menu').classList.toggle('show'); }
+
+        document.addEventListener('click', function(e) {
+            var menu = document.getElementById('floating-lang-menu');
+            var btn = document.getElementById('floating-lang-btn');
+            if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) { menu.classList.remove('show'); }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var savedLang = localStorage.getItem('jdc_lang');
+            if (!savedLang) {
+                setTimeout(function() { document.getElementById('lang-popup-overlay').classList.add('show'); }, 800);
+            } else if (savedLang === 'hi') {
+                triggerTranslation('hi');
+            }
+            updateFloatingUI(savedLang || 'en');
+        });
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <!-- Hero Section -->
     <section id="home" class="hero">
@@ -252,7 +383,7 @@
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <span class="section-tag">Our Environment</span>
-                <h2>Inside Jeevan Deep Clinic (Dental Clinic)</h2>
+                <h2>Inside Jeevan Deep Clinic (Dental & Eye Clinic)</h2>
             </div>
             <div class="gallery-grid">
                 <div class="gallery-item" data-aos="fade-up" data-aos-delay="100">
@@ -425,12 +556,22 @@
         </div>
     </section>
 
+    <!-- Floating Contact Button -->
+    <div class="floating-contact">
+        <a href="tel:+918317035904" class="floating-icon" title="Call Us Now">
+            <i data-lucide="phone-call"></i>
+        </a>
+        <a href="https://wa.me/918317035904" target="_blank" class="floating-icon whatsapp" title="Chat on WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i>
+        </a>
+    </div>
+
     <!-- Contact & Footer -->
     <footer id="contact" class="footer">
         <div class="container footer-grid">
             <div class="footer-info">
-                <h3>Jeevan Deep <span style="color: var(--secondary)">Clinic (Dental Clinic)</span></h3>
-                <p>A leading dental clinic committed to unparalleled excellence in patient care and painless restorative
+                <h3>Jeevan Deep <span style="color: var(--secondary)">Clinic (Dental & Eye Clinic)</span></h3>
+                <p>A leading dental & eye clinic committed to unparalleled excellence in patient care and painless restorative
                     treatments.</p>
                 <div class="contact-details">
                     <div class="contact-item">
