@@ -100,6 +100,7 @@ pipeline {
                         docker run -d --name ${newContainer} \
                             -p ${newPort}:8080 \
                             --network ${NETWORK_NAME} \
+                            -e SERVER_PORT=8080 \
                             -e SPRING_PROFILES_ACTIVE=mysql \
                             -e DB_HOST=${DB_HOST} \
                             -e DB_NAME=${DB_NAME} \
