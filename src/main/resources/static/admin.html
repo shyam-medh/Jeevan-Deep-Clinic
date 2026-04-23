@@ -475,6 +475,36 @@
     <script>
         lucide.createIcons();
 
+        // ---------------------------------------------------------------
+        // GLOBAL API FETCH WRAPPER
+        // Forces every API call to bypass browser and proxy cache, and
+        // intercepts 401 Unauthorized globally (returned instead of a
+        // 302 redirect, which browsers cache and break subsequent visits).
+        // ---------------------------------------------------------------
+        async function apiFetch(url, options = {}) {
+            const defaults = {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    ...(options.headers || {})
+                }
+            };
+            const mergedOptions = { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } };
+            const response = await fetch(url, mergedOptions);
+
+            // 401 means the session is expired — show the login screen
+            if (response.status === 401) {
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('dashboard-screen').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'none';
+                return null; // Signal to callers to stop processing
+            }
+            return response;
+        }
+
+
         // Toast helper
         let toastTimer;
         function showToast(msg, isError = false) {
@@ -576,21 +606,13 @@
 
         async function fetchAppointments() {
             try {
-                const response = await fetch('/api/appointments', { credentials: 'same-origin' });
-                const contentType = response.headers.get("content-type");
+                const response = await apiFetch('/api/appointments');
+                if (!response) return; // 401 handled globally
 
-                // If Spring Security caught us, it redirects to HTML instead of JSON
-                if (!contentType || !contentType.includes("application/json")) {
-                    document.getElementById("login-screen").style.display = "flex";
-                    document.getElementById("dashboard-screen").style.display = "none";
-                    document.getElementById("logout-btn").style.display = "none";
-                    return; // Stop here, user must log in
-                }
-
-                // If we made it here, we are successfully authenticated!
-                document.getElementById("login-screen").style.display = "none";
-                document.getElementById("dashboard-screen").style.display = "block";
-                document.getElementById("logout-btn").style.display = "block";
+                // Successfully authenticated — show the dashboard
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'block';
+                document.getElementById('logout-btn').style.display = 'block';
 
                 const data = await response.json();
                 const tableBody = document.getElementById('table-body');
@@ -624,7 +646,7 @@
                 }
                 showToast(`✓ ${data.length} appointment(s) loaded.`);
             } catch (error) {
-                console.error("Error fetching appointments:", error);
+                console.error('Error fetching appointments:', error);
                 showToast('Error loading appointments.', true);
             }
         } // end fetchAppointments
@@ -750,7 +772,8 @@
 
         async function fetchQA() {
             try {
-                const res = await fetch('/api/questions', { credentials: 'same-origin' });
+                const res = await apiFetch('/api/questions');
+                if (!res) return; // 401 handled globally
                 if (!res.ok) { showToast('Could not load questions.', true); return; }
                 const questions = await res.json();
                 const tbody = document.getElementById('qa-table-body');
@@ -794,20 +817,20 @@
         async function submitAnswer(id) {
             const ansEl = document.getElementById(`ans-${id}`);
             if (!ansEl || !ansEl.value.trim()) return;
-            await fetch(`/api/questions/${id}/answer`, { method: 'PUT', credentials: 'same-origin', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ answerText: ansEl.value }) });
+            await apiFetch(`/api/questions/${id}/answer`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ answerText: ansEl.value }) });
             showToast('✓ Answer saved successfully.');
             fetchQA();
         }
 
         async function toggleDisplay(id) {
-            await fetch(`/api/questions/${id}/toggle-display`, { method: 'PUT', credentials: 'same-origin' });
+            await apiFetch(`/api/questions/${id}/toggle-display`, { method: 'PUT' });
             showToast('✓ Display status updated.');
             fetchQA();
         }
 
         async function deleteQA(id) {
             if (!confirm('Delete this question?')) return;
-            await fetch(`/api/questions/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            await apiFetch(`/api/questions/${id}`, { method: 'DELETE' });
             showToast('✓ Question deleted.');
             fetchQA();
         }
@@ -815,7 +838,8 @@
 
         async function fetchReviews() {
             try {
-                const response = await fetch('/api/reviews', { credentials: 'same-origin' });
+                const response = await apiFetch('/api/reviews');
+                if (!response) return; // 401 handled globally
                 if (!response.ok) { showToast('Could not load reviews.', true); return; }
 
                 const reviews = await response.json();
@@ -869,9 +893,9 @@
         }
 
         async function approveReview(id) {
-            if(!confirm("Are you sure you want to approve this review? It will appear publicly on the website.")) return;
+            if(!confirm('Are you sure you want to approve this review? It will appear publicly on the website.')) return;
             try {
-                await fetch(`/api/reviews/${id}/approve`, { method: 'PUT', credentials: 'same-origin' });
+                await apiFetch(`/api/reviews/${id}/approve`, { method: 'PUT' });
                 showToast('✓ Review approved!');
                 fetchReviews();
             } catch (e) {
@@ -881,9 +905,9 @@
         }
 
         async function deleteReview(id) {
-            if(!confirm("Are you sure you want to delete this review?")) return;
+            if(!confirm('Are you sure you want to delete this review?')) return;
             try {
-                await fetch(`/api/reviews/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+                await apiFetch(`/api/reviews/${id}`, { method: 'DELETE' });
                 showToast('✓ Review deleted.');
                 fetchReviews();
             } catch (e) {
