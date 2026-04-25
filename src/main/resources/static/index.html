@@ -48,8 +48,9 @@
         const db = getFirestore(app);
         const analytics = getAnalytics(app);
 
-        // Make db available globally for script.js
+        // Make db available globally and signal script.js that it is ready
         window.db = db;
+        window.dispatchEvent(new CustomEvent('firebase-ready'));
     </script>
 
     <!-- Google tag (gtag.js) -->
@@ -313,44 +314,42 @@
                     <div class="service-icon"><i data-lucide="sparkles"></i></div>
                     <h3>Teeth Cleaning</h3>
                     <p>Professional scaling and polishing to remove plaque and tartar for a fresh, healthy smile.</p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <button class="service-link" onclick="openServiceModal('teeth-cleaning')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
                 <!-- Service 2 -->
                 <div class="service-card" data-aos="fade-up" data-aos-delay="200">
                     <div class="service-icon"><i data-lucide="activity"></i></div>
                     <h3>Root Canal Treatment</h3>
                     <p>Advanced painless endodontic therapy to seamlessly save your natural tooth from infection.</p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <button class="service-link" onclick="openServiceModal('root-canal')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
                 <!-- Service 3 -->
                 <div class="service-card" data-aos="fade-up" data-aos-delay="300">
                     <div class="service-icon"><i data-lucide="scissors"></i></div>
                     <h3>Tooth Extraction</h3>
                     <p>Gentle and safe removal of decayed or wisdom teeth with minimal absolute discomfort.</p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <button class="service-link" onclick="openServiceModal('extraction')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
                 <!-- Service 4 -->
                 <div class="service-card" data-aos="fade-up" data-aos-delay="100">
                     <div class="service-icon"><i data-lucide="gem"></i></div>
                     <h3>Dental Implants</h3>
-                    <p>Permanent and natural-looking tooth replacement solution for missing teeth with high durability.
-                    </p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <p>Permanent and natural-looking tooth replacement solution for missing teeth with high durability.</p>
+                    <button class="service-link" onclick="openServiceModal('implants')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
                 <!-- Service 5 -->
                 <div class="service-card" data-aos="fade-up" data-aos-delay="200">
                     <div class="service-icon"><i data-lucide="grid-3x3"></i></div>
                     <h3>Orthodontics</h3>
-                    <p>Correct alignment issues with modern metal braces, ceramic options, or invisible clear aligners.
-                    </p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <p>Correct alignment issues with modern metal braces, ceramic options, or invisible clear aligners.</p>
+                    <button class="service-link" onclick="openServiceModal('orthodontics')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
                 <!-- Service 6 -->
                 <div class="service-card" data-aos="fade-up" data-aos-delay="300">
                     <div class="service-icon"><i data-lucide="smile"></i></div>
                     <h3>Teeth Whitening</h3>
                     <p>Restore the natural brightness of your teeth with our scientifically proven safe whitening.</p>
-                    <a href="#appointment" class="service-link">Book <i data-lucide="arrow-right" width="16"></i></a>
+                    <button class="service-link" onclick="openServiceModal('whitening')">See More <i data-lucide="arrow-right" width="16"></i></button>
                 </div>
             </div>
         </div>
@@ -546,7 +545,7 @@
                             <label for="date">Preferred Date</label>
                             <div class="input-wrapper">
                                 <i data-lucide="calendar"></i>
-                                <input type="date" id="date" required>
+                                <input type="date" id="date" required min="">
                             </div>
                         </div>
                         <div class="form-group">
@@ -560,6 +559,7 @@
                                     <option>4:00 PM - 5:00 PM</option>
                                     <option>5:00 PM - 6:00 PM</option>
                                     <option>6:00 PM - 7:00 PM</option>
+                                    <option>7:00 PM - 8:00 PM</option>
                                 </select>
                             </div>
                         </div>
@@ -581,15 +581,72 @@
         </div>
     </section>
 
-    <!-- Floating Contact Button -->
-    <div class="floating-contact">
-        <a href="tel:+918317035904" class="floating-icon" title="Call Us Now">
-            <i data-lucide="phone-call"></i>
-        </a>
-        <a href="https://wa.me/918317035904" target="_blank" class="floating-icon whatsapp" title="Chat on WhatsApp">
-            <i class="fa-brands fa-whatsapp"></i>
-        </a>
+    <!-- Service Detail Modal -->
+    <div id="service-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);z-index:3000;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:white;border-radius:16px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.25);">
+            <button onclick="closeServiceModal()" style="position:absolute;right:16px;top:16px;background:white;border:none;width:36px;height:36px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:20px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;color:#334155;">&times;</button>
+            <!-- Before / After images -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:16px 16px 0 0;overflow:hidden;">
+                <div style="position:relative;">
+                    <img id="svc-before-img" src="" alt="Before" style="width:100%;height:200px;object-fit:cover;">
+                    <span style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.6);color:white;padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">BEFORE</span>
+                </div>
+                <div style="position:relative;">
+                    <img id="svc-after-img" src="" alt="After" style="width:100%;height:200px;object-fit:cover;">
+                    <span style="position:absolute;bottom:10px;left:10px;background:rgba(16,185,129,0.85);color:white;padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">AFTER</span>
+                </div>
+            </div>
+            <div style="padding:30px;">
+                <h2 id="svc-title" style="color:var(--primary);margin:0 0 12px;font-size:1.6rem;"></h2>
+                <p id="svc-desc" style="color:#475569;line-height:1.8;margin-bottom:24px;"></p>
+                <ul id="svc-points" style="color:#334155;line-height:2;padding-left:20px;margin-bottom:28px;"></ul>
+                <a href="#appointment" class="btn btn-primary" onclick="closeServiceModal()" style="display:inline-flex;align-items:center;gap:8px;padding:14px 28px;font-size:1rem;"><i data-lucide="calendar"></i> Book Appointment</a>
+            </div>
+        </div>
     </div>
+
+    <!-- Floating Contact Button (single expandable) -->
+    <div class="floating-contact" id="floating-contact">
+        <div class="floating-menu" id="floating-menu">
+            <a href="tel:+918317035904" class="floating-option" title="Call Dr. Baranwal">
+                <span class="floating-label">Number 1</span>
+                <i data-lucide="phone-call"></i>
+            </a>
+            <a href="tel:+918858623732" class="floating-option" title="Call Dr. Second">
+                <span class="floating-label">Number 2</span>
+                <i data-lucide="phone-call"></i>
+            </a>
+            <a href="https://wa.me/918317035904" target="_blank" class="floating-option whatsapp" title="WhatsApp">
+                <span class="floating-label">WhatsApp</span>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.552 4.107 1.515 5.842L.057 23.999l6.304-1.654A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.903 0-3.68-.516-5.205-1.414l-.373-.221-3.862 1.013 1.033-3.77-.241-.388A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            </a>
+        </div>
+        <button class="floating-main-btn" id="floating-main-btn" onclick="toggleFloating()" title="Contact Us">
+            <i data-lucide="phone-call" id="floating-icon-main"></i>
+        </button>
+    </div>
+    <style>
+        .floating-contact { position: fixed; bottom: 30px; right: 25px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .floating-main-btn { width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(15,76,129,0.4); transition: all 0.3s; }
+        .floating-main-btn:hover { transform: scale(1.1); }
+        .floating-menu { display: flex; flex-direction: column; gap: 8px; transition: all 0.3s; overflow: hidden; max-height: 0; opacity: 0; pointer-events: none; }
+        .floating-menu.open { max-height: 220px; opacity: 1; pointer-events: all; }
+        .floating-option { display: flex; align-items: center; gap: 10px; background: white; color: var(--primary); padding: 8px 14px; border-radius: 30px; text-decoration: none; font-size: 0.85rem; font-weight: 600; box-shadow: 0 2px 12px rgba(0,0,0,0.15); transition: 0.2s; white-space: nowrap; }
+        .floating-option:hover { transform: translateX(-4px); }
+        .floating-option.whatsapp { color: #25D366; }
+        .floating-option svg, .floating-option i { width: 18px; height: 18px; flex-shrink: 0; }
+    </style>
+    <script>
+        function toggleFloating() {
+            document.getElementById('floating-menu').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const fc = document.getElementById('floating-contact');
+            if (fc && !fc.contains(e.target)) {
+                document.getElementById('floating-menu').classList.remove('open');
+            }
+        });
+    </script>
 
     <!-- Contact & Footer -->
     <footer id="contact" class="footer">
@@ -605,7 +662,10 @@
                     </div>
                     <div class="contact-item">
                         <div class="icon-blob"><i data-lucide="phone" width="18px"></i></div>
-                        <span>+91 83170 35904</span>
+                        <div>
+                            <span>+91 83170 35904</span><br>
+                            <span>+91 88586 23732</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -622,21 +682,21 @@
                 <h4>Clinic Timings</h4>
                 <div class="hours-card">
                     <div class="hour-row">
-                        <span>Mon - Tue, Thu - Sun</span>
-                        <strong>1:00PM - 07:00 PM</strong>
+                        <span>Mon, Tue</span>
+                        <strong>1:00 PM – 8:00 PM</strong>
+                    </div>
+                    <div class="hour-row">
+                        <span>Thu, Fri, Sat, Sun</span>
+                        <strong>1:00 PM – 8:00 PM</strong>
                     </div>
                     <div class="hour-row highlight">
                         <span>Wednesday</span>
-                        <strong>Closed</strong>
+                        <strong style="color:#ef4444">Closed</strong>
                     </div>
                 </div>
                 <div class="social-links mt-4">
-                    <a href="https://www.facebook.com" target="_blank" class="social-btn" title="Facebook"><i
-                            class="fa-brands fa-facebook-f"></i></a>
-                    <a href="https://www.instagram.com" target="_blank" class="social-btn" title="Instagram"><i
-                            class="fa-brands fa-instagram"></i></a>
-                    <a href="https://wa.me/918317035904" target="_blank" class="social-btn" title="WhatsApp"><i
-                            class="fa-brands fa-whatsapp"></i></a>
+                    <a href="https://www.facebook.com" target="_blank" class="social-btn" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://wa.me/918317035904" target="_blank" class="social-btn" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
                 </div>
             </div>
         </div>
@@ -662,6 +722,72 @@
             easing: 'ease-out-cubic',
             once: true,
             offset: 50,
+        });
+    </script>
+    <!-- Service Modal Logic -->
+    <script>
+        const SERVICE_DATA = {
+            'teeth-cleaning': {
+                title: 'Teeth Cleaning (Scaling & Polishing)',
+                before: 'https://images.unsplash.com/photo-1588776814546-1ffbb172bdde?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'Professional dental cleaning removes hardened plaque (tartar) and surface stains that regular brushing cannot eliminate. Using ultrasonic scalers and hand instruments, our specialists clean along and below the gumline, followed by polishing for a smooth, fresh finish.',
+                points: ['Removes tartar & calculus buildup', 'Prevents gum disease & cavities', 'Leaves teeth visibly brighter', 'Recommended every 6 months', 'Completely painless procedure']
+            },
+            'root-canal': {
+                title: 'Root Canal Treatment (RCT)',
+                before: 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'Root canal treatment saves infected or severely decayed teeth by removing the damaged pulp, disinfecting the root canals, and sealing them. With modern anesthesia and rotary techniques, the procedure is no more uncomfortable than a routine filling.',
+                points: ['Saves your natural tooth', 'Eliminates toothache & infection', 'Virtually painless with modern techniques', 'High success rate (>95%)', 'Restored with a crown for strength']
+            },
+            'extraction': {
+                title: 'Tooth Extraction',
+                before: 'https://images.unsplash.com/photo-1588776814546-1ffbb172bdde?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'When a tooth is beyond saving, gentle extraction is the safest option. We use precision instruments and local anesthesia to ensure a comfortable, quick removal — including wisdom teeth extractions and surgical cases.',
+                points: ['Simple & surgical extractions', 'Wisdom tooth removal', 'Minimal post-op discomfort', 'Bone-preserving technique', 'Same-day appointments available']
+            },
+            'implants': {
+                title: 'Dental Implants',
+                before: 'https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'Dental implants are titanium posts surgically placed in the jawbone to act as artificial tooth roots. They provide a permanent, natural-looking replacement that looks, feels, and functions like your real teeth — preserving jawbone and facial structure.',
+                points: ['Permanent & durable (20+ year lifespan)', 'Looks & functions like natural teeth', 'Prevents bone loss', 'No removal required', 'Single tooth to full-arch solutions']
+            },
+            'orthodontics': {
+                title: 'Orthodontics (Braces & Aligners)',
+                before: 'https://images.unsplash.com/photo-1588776814546-1ffbb172bdde?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'Orthodontic treatment corrects misaligned teeth and jaws for both cosmetic and functional improvement. We offer traditional metal braces, tooth-colored ceramic braces, and removable clear aligners to suit every lifestyle and budget.',
+                points: ['Metal, ceramic & clear aligner options', 'Suitable for teens & adults', 'Improves bite & oral hygiene', 'Custom treatment plan', 'Regular progress monitoring']
+            },
+            'whitening': {
+                title: 'Teeth Whitening',
+                before: 'https://images.unsplash.com/photo-1588776814546-1ffbb172bdde?auto=format&fit=crop&w=400&q=80',
+                after: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=400&q=80',
+                desc: 'Professional teeth whitening can lighten your teeth by several shades in a single visit. Using clinically approved bleaching agents and LED activation, we safely remove deep stains caused by coffee, tea, tobacco, and aging — delivering a dramatically brighter smile.',
+                points: ['Up to 8 shades whiter in 1 session', 'Safe, enamel-friendly formula', 'Long-lasting results', 'No sensitivity with our gel', 'Take-home kit option available']
+            }
+        };
+
+        function openServiceModal(key) {
+            const s = SERVICE_DATA[key]; if (!s) return;
+            document.getElementById('svc-title').innerText = s.title;
+            document.getElementById('svc-before-img').src = s.before;
+            document.getElementById('svc-after-img').src = s.after;
+            document.getElementById('svc-desc').innerText = s.desc;
+            document.getElementById('svc-points').innerHTML = s.points.map(p => `<li>${p}</li>`).join('');
+            const m = document.getElementById('service-modal');
+            m.style.display = 'flex'; document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+        function closeServiceModal() {
+            document.getElementById('service-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        document.getElementById('service-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeServiceModal();
         });
     </script>
     <!-- JS -->

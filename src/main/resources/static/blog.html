@@ -35,42 +35,49 @@
 
         // Load Blogs from Firestore
         async function loadBlogs() {
-            const blogGrid = document.getElementById('blog-grid');
+            const blogGrid = document.getElementById('dynamic-blogs');
             if (!blogGrid) return;
-
             try {
-                const q = query(collection(db, "blogs"), orderBy("date", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.empty) {
-                    blogGrid.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">No blog posts available yet. Check back soon!</p>';
+                const snap = await getDocs(collection(db, "blogs"));
+                const blogs = [];
+                snap.forEach(d => blogs.push({ id: d.id, ...d.data() }));
+                blogs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                if (blogs.length === 0) {
+                    blogGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px"><p>No blog posts yet. Check back soon!</p></div>';
                     return;
                 }
-
                 blogGrid.innerHTML = '';
-                querySnapshot.forEach(doc => {
-                    const blog = doc.data();
-                    const card = `
-                        <article class="blog-card" data-aos="fade-up">
-                            <div class="blog-image">
-                                <img src="${blog.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2070&auto=format&fit=crop'}" alt="${blog.title}">
-                                <div class="blog-category">${blog.category || 'Dental Care'}</div>
+                blogs.forEach((blog, i) => {
+                    const date = blog.createdAt?.toDate ? blog.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : blog.date || '';
+                    const img = blog.image || blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80';
+                    const card = document.createElement('article');
+                    card.className = 'blog-card';
+                    card.setAttribute('data-aos', 'fade-up');
+                    card.setAttribute('data-aos-delay', String(i * 100));
+                    card.innerHTML = `
+                        <div class="blog-img-wrapper">
+                            <img src="${img}" alt="${blog.title}" onerror="this.src='https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80'">
+                            <div class="blog-category">${blog.category || 'Dental Care'}</div>
+                        </div>
+                        <div class="blog-content">
+                            <div class="blog-meta">
+                                <span><i data-lucide="calendar" width="14"></i> ${date}</span>
+                                <span><i data-lucide="user" width="14"></i> ${blog.author || 'Dr. Baranwal'}</span>
                             </div>
-                            <div class="blog-content">
-                                <div class="blog-date"><i data-lucide="calendar"></i> ${blog.date}</div>
-                                <h3 class="blog-title">${blog.title}</h3>
-                                <p class="blog-excerpt">${blog.excerpt}</p>
-                                <a href="#" class="read-more">Read Full Article <i data-lucide="arrow-right"></i></a>
-                            </div>
-                        </article>`;
-                    blogGrid.innerHTML += card;
+                            <h3>${blog.title}</h3>
+                            <p>${blog.excerpt || blog.content?.substring(0, 120) || ''}</p>
+                            <button class="btn btn-outline btn-sm mt-3 read-more-btn" onclick="openArticle(${i})">Read Full Article <i data-lucide="arrow-right" width="14"></i></button>
+                        </div>`;
+                    blogGrid.appendChild(card);
                 });
+                window._blogData = blogs; // store globally for openArticle
                 lucide.createIcons();
             } catch (error) {
                 console.error("Error loading blogs:", error);
+                blogGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px"><p>Error loading blogs. Please try again later.</p></div>';
             }
         }
-
         window.addEventListener('DOMContentLoaded', loadBlogs);
     </script>
 
@@ -272,16 +279,6 @@
         </div>
     </div>
 
-    <!-- Floating Contact Button -->
-    <div class="floating-contact">
-        <a href="tel:+918317035904" class="floating-icon" title="Call Us Now">
-            <i data-lucide="phone-call"></i>
-        </a>
-        <a href="https://wa.me/918317035904" target="_blank" class="floating-icon whatsapp" title="Chat on WhatsApp">
-            <i class="fa-brands fa-whatsapp"></i>
-        </a>
-    </div>
-
     <!-- Contact & Footer -->
     <footer id="contact" class="footer">
         <!-- Reusing existing footer content -->
@@ -314,7 +311,7 @@
                 <div class="hours-card">
                     <div class="hour-row">
                         <span>Mon - Tue, Thu - Sun</span>
-                        <strong>1:00PM - 07:00 PM</strong>
+                        <strong>1:00PM - 08:00 PM</strong>
                     </div>
                     <div class="hour-row highlight">
                         <span>Wednesday</span>
@@ -344,73 +341,75 @@
         AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true, offset: 50 });
         lucide.createIcons();
 
-        // Fetch and render blogs
-        async function loadBlogs() {
-            try {
-                const res = await fetch('/api/blogs');
-                const blogs = await res.json();
-                const container = document.getElementById('dynamic-blogs');
-                container.innerHTML = '';
-
-                if (blogs.length === 0) {
-                    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px;"><p>Check back later for new biological insights!</p></div>`;
-                    return;
-                }
-
-                // Sort newest first
-                blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-                blogs.forEach((blog, index) => {
-                    const delay = index * 100;
-                    const date = new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    
-                    const article = document.createElement('article');
-                    article.className = 'blog-card';
-                    article.setAttribute('data-aos', 'fade-up');
-                    article.setAttribute('data-aos-delay', delay);
-                    article.innerHTML = `
-                        <div class="blog-img-wrapper">
-                            <img src="${blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}" alt="${blog.title}">
-                            <div class="blog-category">${blog.category}</div>
-                        </div>
-                        <div class="blog-content">
-                            <div class="blog-meta">
-                                <span><i data-lucide="calendar" width="14"></i> ${date}</span>
-                                <span><i data-lucide="user" width="14"></i> ${blog.author}</span>
-                            </div>
-                            <h3>${blog.title}</h3>
-                            <p>${blog.excerpt}</p>
-                            <button class="btn btn-outline btn-sm mt-3 read-more-btn" onclick='openArticle(${JSON.stringify(blog).replace(/'/g, "&apos;")})'>Read Article</button>
-                        </div>
-                    `;
-                    container.appendChild(article);
-                });
-                lucide.createIcons();
-            } catch (e) {
-                console.error("Failed to load blogs", e);
-            }
-        }
-
-        function openArticle(blog) {
-            document.getElementById('modal-img').src = blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
-            document.getElementById('modal-category').innerText = blog.category;
+        // openArticle uses index into window._blogData set by Firestore loader
+        window.openArticle = function(indexOrBlog) {
+            const blog = (typeof indexOrBlog === 'number') ? (window._blogData || [])[indexOrBlog] : indexOrBlog;
+            if (!blog) return;
+            const img = blog.image || blog.imageUrl || 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80';
+            const date = blog.createdAt?.toDate ? blog.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : blog.date || '';
+            document.getElementById('modal-img').src = img;
+            document.getElementById('modal-category').innerText = blog.category || 'Dental Care';
             document.getElementById('modal-title').innerText = blog.title;
-            document.getElementById('modal-date').innerText = new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            document.getElementById('modal-author').innerText = blog.author;
-            document.getElementById('modal-content').innerText = blog.content;
-            
+            document.getElementById('modal-date').innerText = date;
+            document.getElementById('modal-author').innerText = blog.author || 'Dr. Baranwal';
+            document.getElementById('modal-content').innerText = blog.content || blog.excerpt || '';
             document.getElementById('article-modal').style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
-        }
+            document.body.style.overflow = 'hidden';
+        };
 
         document.getElementById('close-article').addEventListener('click', () => {
             document.getElementById('article-modal').style.display = 'none';
             document.body.style.overflow = '';
         });
-
-        document.addEventListener('DOMContentLoaded', loadBlogs);
+        // Close on backdrop click
+        document.getElementById('article-modal').addEventListener('click', function(e) {
+            if (e.target === this) { this.style.display = 'none'; document.body.style.overflow = ''; }
+        });
     </script>
     <script src="script.js"></script>
+
+    <!-- Floating Contact Button (single expandable) -->
+    <div class="floating-contact" id="floating-contact">
+        <div class="floating-menu" id="floating-menu">
+            <a href="tel:+918317035904" class="floating-option" title="Call Dr. Baranwal">
+                <span class="floating-label">Number 1</span>
+                <i data-lucide="phone-call"></i>
+            </a>
+            <a href="tel:+918858623732" class="floating-option" title="Call Dr. Second">
+                <span class="floating-label">Number 2</span>
+                <i data-lucide="phone-call"></i>
+            </a>
+            <a href="https://wa.me/918317035904" target="_blank" class="floating-option whatsapp" title="WhatsApp">
+                <span class="floating-label">WhatsApp</span>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.118.552 4.107 1.515 5.842L.057 23.999l6.304-1.654A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.903 0-3.68-.516-5.205-1.414l-.373-.221-3.862 1.013 1.033-3.77-.241-.388A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+            </a>
+        </div>
+        <button class="floating-main-btn" id="floating-main-btn" onclick="toggleFloating()" title="Contact Us">
+            <i data-lucide="phone-call" id="floating-icon-main"></i>
+        </button>
+    </div>
+    <style>
+        .floating-contact { position: fixed; bottom: 30px; right: 25px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .floating-main-btn { width: 56px; height: 56px; border-radius: 50%; background: var(--primary, #0f4c81); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(15,76,129,0.4); transition: all 0.3s; }
+        .floating-main-btn:hover { transform: scale(1.1); }
+        .floating-menu { display: flex; flex-direction: column; gap: 8px; transition: all 0.3s; overflow: hidden; max-height: 0; opacity: 0; pointer-events: none; }
+        .floating-menu.open { max-height: 220px; opacity: 1; pointer-events: all; }
+        .floating-option { display: flex; align-items: center; gap: 10px; background: white; color: var(--primary, #0f4c81); padding: 8px 14px; border-radius: 30px; text-decoration: none; font-size: 0.85rem; font-weight: 600; box-shadow: 0 2px 12px rgba(0,0,0,0.15); transition: 0.2s; white-space: nowrap; }
+        .floating-option:hover { transform: translateX(-4px); }
+        .floating-option.whatsapp { color: #25D366; }
+        .floating-option svg, .floating-option i { width: 18px; height: 18px; flex-shrink: 0; }
+    </style>
+    <script>
+        function toggleFloating() {
+            document.getElementById('floating-menu').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const fc = document.getElementById('floating-contact');
+            if (fc && !fc.contains(e.target)) {
+                document.getElementById('floating-menu').classList.remove('open');
+            }
+        });
+    </script>
 </body>
 </html>
 

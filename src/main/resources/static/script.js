@@ -2,6 +2,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide icons
     lucide.createIcons();
 
+    // Set date minimum to today (blocks past dates in native calendar picker)
+    const dateInput = document.getElementById('date');
+    const timeSelect = document.getElementById('time');
+    if (dateInput) {
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        dateInput.setAttribute('min', getTodayStr());
+        dateInput.value = ''; // clear any old cached value
+
+        function updateTimeSlots() {
+            if (!timeSelect) return;
+            const now = new Date();
+            const isToday = dateInput.value === getTodayStr();
+            const slotsConfig = [
+                { value: '2:00 PM - 3:00 PM', startH: 14 },
+                { value: '3:00 PM - 4:00 PM', startH: 15 },
+                { value: '4:00 PM - 5:00 PM', startH: 16 },
+                { value: '5:00 PM - 6:00 PM', startH: 17 },
+                { value: '6:00 PM - 7:00 PM', startH: 18 },
+                { value: '7:00 PM - 8:00 PM', startH: 19 },
+            ];
+            const currentH = now.getHours();
+            Array.from(timeSelect.options).forEach(opt => {
+                if (!opt.value) return;
+                const slot = slotsConfig.find(s => s.value === opt.value);
+                if (slot && isToday) {
+                    opt.disabled = currentH >= slot.startH;
+                    opt.text = opt.disabled ? slot.value + ' (Passed)' : slot.value;
+                } else {
+                    opt.disabled = false;
+                    opt.text = slot ? slot.value : opt.value;
+                }
+            });
+            if (timeSelect.options[timeSelect.selectedIndex]?.disabled) timeSelect.value = '';
+        }
+        dateInput.addEventListener('change', updateTimeSlots);
+        updateTimeSlots();
+    }
+
     // Mobile Menu Toggle
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
@@ -65,11 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdAt: serverTimestamp()
                     });
                     
-                    // WhatsApp Redirect
-                    const waText = `Hello Jeevan Deep Clinic, I am ${appointmentData.name}. I would like to book an appointment on ${appointmentData.preferredDate} around ${appointmentData.preferredTime}.`;
-                    const waUrl = `https://wa.me/918317035904?text=${encodeURIComponent(waText)}`;
+                    // Use the doctor number selected by the patient
+                    const doctorNumber = document.getElementById('doctor')?.value || '918317035904';
+                    const waText = `Hello Jeevan Deep Clinic, I am ${appointmentData.name}. I would like to book an appointment on ${appointmentData.preferredDate} around ${appointmentData.preferredTime}. My concern: ${appointmentData.message || 'N/A'}`;
+                    const waUrl = `https://wa.me/91${doctorNumber}?text=${encodeURIComponent(waText)}`;
                     
-                    alert('Appointment successfully received! Opening WhatsApp to confirm...');
+                    alert('Appointment booked successfully! Redirecting to WhatsApp...');
                     window.open(waUrl, '_blank');
                     appointmentForm.reset();
                 }
@@ -103,7 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 waText += ` My concern is: ${message}`;
             }
 
-            const waUrl = `https://wa.me/918317035904?text=${encodeURIComponent(waText)}`;
+            // Use selected doctor number for WhatsApp redirect
+            const doctorNumber = document.getElementById('doctor')?.value || '8317035904';
+            const waUrl = `https://wa.me/91${doctorNumber}?text=${encodeURIComponent(waText)}`;
             window.open(waUrl, '_blank');
         });
     }
@@ -156,14 +200,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('dynamic-qa');
         if (!container || !window.db) return;
         try {
-            const { collection, getDocs, query, where, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-            // Show only answered questions
-            const q = query(collection(window.db, "questions"), where("answered", "==", true), orderBy("createdAt", "desc"), limit(10));
+            const { collection, getDocs, query, where } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+            // Simple query without orderBy to avoid needing a composite index
+            const q = query(collection(window.db, "questions"), where("answered", "==", true));
             const querySnapshot = await getDocs(q);
             
             container.innerHTML = '';
-            querySnapshot.forEach(doc => {
-                const qData = doc.data();
+            // Sort client-side by createdAt descending
+            const docs = [];
+            querySnapshot.forEach(d => docs.push(d.data()));
+            // Sort newest first, only show items where showOnWebsite is not explicitly false
+            docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            // Filter: showOnWebsite defaults to true unless doctor explicitly set it to false
+            const visible = docs.filter(d => d.showOnWebsite !== false).slice(0, 10);
+
+            visible.forEach(qData => {
                 const item = document.createElement('div');
                 item.className = 'faq-item';
                 item.innerHTML = `
@@ -175,8 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>${qData.answerText || 'The doctor will answer this shortly!'}</p>
                     </div>`;
                 container.appendChild(item);
-
-                // Attach toggle click
                 item.querySelector('.faq-question').addEventListener('click', () => {
                     item.classList.toggle('active');
                 });
@@ -249,21 +298,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!reviewsContainer || !window.db) return;
 
         try {
-            const { collection, getDocs, query, where, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-            // Only show approved reviews
-            const q = query(collection(window.db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"), limit(6));
+            const { collection, getDocs, query, where } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+            // Simple query without orderBy to avoid composite index requirement
+            const q = query(collection(window.db, "reviews"), where("approved", "==", true));
             const querySnapshot = await getDocs(q);
             
             reviewsContainer.innerHTML = '';
-            
-            if(querySnapshot.empty) {
+            const reviews = [];
+            querySnapshot.forEach(d => reviews.push(d.data()));
+            // Sort newest first, only show reviews doctor has approved AND made visible
+            reviews.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            const topReviews = reviews.filter(r => r.approved && r.showOnWebsite !== false).slice(0, 6);
+
+            if(topReviews.length === 0) {
                 reviewsContainer.innerHTML = '<p style="text-align: center; width: 100%; color: var(--text-muted);">No reviews yet. Be the first to write one!</p>';
                 return;
             }
 
             let index = 0;
-            querySnapshot.forEach((doc) => {
-                const review = doc.data();
+            topReviews.forEach((review) => {
                 const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
                 const initial = review.patientName.charAt(0).toUpperCase();
                 const delay = (index % 3) * 100;
@@ -289,8 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Call loadReviews immediately
-    loadReviews();
+    // Wait for Firebase to be ready before loading dynamic content
+    function onFirebaseReady(callback) {
+        if (window.db) { callback(); return; }
+        window.addEventListener('firebase-ready', callback, { once: true });
+    }
+
+    // Call loadReviews and loadDynamicQA only after Firebase is ready
+    onFirebaseReady(() => {
+        loadReviews();
+        loadDynamicQA();
+    });
 
     // Navbar Scroll Effect
     window.addEventListener('scroll', () => {

@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Doctor Dashboard | Jeevan Deep Clinic</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD1UGjRCWZdcv-0BeZFUEv7Lt-TMB8UGQ8",
@@ -24,159 +21,198 @@
             messagingSenderId: "430805836459",
             appId: "1:430805836459:web:8a9462b96ffae6bc3c4dee"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        // Make functions globally available for inline onclick handlers
         window.db = db;
-        window.getDocs = getDocs;
-        window.collection = collection;
-        window.query = query;
-        window.orderBy = orderBy;
-        window.updateDoc = updateDoc;
-        window.deleteDoc = deleteDoc;
-        window.addDoc = addDoc;
-        window.doc = doc;
-        window.serverTimestamp = serverTimestamp;
+        window.getDocs = getDocs; window.collection = collection; window.query = query;
+        window.orderBy = orderBy; window.updateDoc = updateDoc; window.deleteDoc = deleteDoc;
+        window.addDoc = addDoc; window.doc = doc; window.serverTimestamp = serverTimestamp; window.where = where;
+        // Signal that Firebase is ready
+        window._firebaseReady = true;
+        window.dispatchEvent(new CustomEvent('firebase-ready'));
     </script>
 
     <style>
-        :root {
-            --primary: #0f4c81;
-            --primary-light: #e6f0fa;
-            --secondary: #10b981;
-            --white: #ffffff;
-            --bg-light: #f8fafc;
-            --text-main: #334155;
-            --border-color: #e2e8f0;
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            font-family: 'Inter', sans-serif;
+        :root { --primary:#0f4c81; --primary-light:#e6f0fa; --secondary:#10b981; --white:#ffffff; --bg-light:#f8fafc; --text-main:#334155; --border-color:#e2e8f0; --shadow-md:0 4px 6px -1px rgba(0,0,0,0.05); font-family:'Inter',sans-serif; }
+        /* Sticky Header */
+        .header { background:var(--white); padding:14px 20px; box-shadow:var(--shadow-md); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:200; }
+        .header h1 { font-family:'Plus Jakarta Sans',sans-serif; color:var(--primary); margin:0; display:flex; align-items:center; gap:10px; font-size:1.2rem; }
+        #login-screen { display:flex; flex:1; align-items:center; justify-content:center; }
+        .login-card { background:var(--white); padding:40px; border-radius:12px; box-shadow:var(--shadow-md); width:100%; max-width:400px; text-align:center; }
+        .login-card input { width:100%; padding:12px; margin:16px 0; border:1px solid var(--border-color); border-radius:8px; box-sizing:border-box; font-size:1rem; }
+        /* Buttons — min 44px for touch */
+        .btn { background:var(--primary); color:white; border:none; padding:12px 20px; border-radius:8px; cursor:pointer; font-weight:600; transition:0.3s; display:inline-flex; align-items:center; gap:6px; font-size:0.9rem; min-height:44px; }
+        .btn:hover { background:#0c3e69; }
+        .btn-sm { padding:8px 14px; font-size:0.82rem; min-height:38px; }
+        .btn-success { background:var(--secondary); } .btn-danger { background:#ef4444; }
+        #dashboard-screen { display:none; padding:16px; flex:1; }
+        .tabs { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+        .tab-btn { background:white; border:1px solid var(--border-color); font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; padding:10px 16px; border-radius:8px; transition:0.3s; white-space:nowrap; display:flex; align-items:center; gap:6px; min-height:44px; }
+        .tab-btn.active { background:var(--primary); color:white; border-color:var(--primary); }
+        .tab-content { display:none; } .tab-content.active { display:block; }
+        .table-container { background:var(--white); border-radius:12px; box-shadow:var(--shadow-md); overflow-x:auto; margin-bottom:20px; border:1px solid var(--border-color); -webkit-overflow-scrolling:touch; }
+        table { width:100%; border-collapse:collapse; text-align:left; min-width:600px; }
+        th,td { padding:12px 16px; border-bottom:1px solid var(--border-color); }
+        th { background:#f1f5f9; color:#475569; font-weight:600; text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; }
+        .badge { padding:3px 9px; border-radius:20px; font-size:0.72rem; font-weight:700; text-transform:uppercase; background:var(--primary-light); color:var(--primary); }
+        .badge-pending { background:#fff7ed; color:#9a3412; } .badge-live { background:#dcfce7; color:#166534; } .badge-past { background:#f1f5f9; color:#475569; }
+        .sub-nav { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+        .sub-btn { background:#f1f5f9; border:none; padding:8px 16px; border-radius:6px; font-size:0.85rem; cursor:pointer; font-weight:600; min-height:38px; }
+        .sub-btn.active { background:var(--primary-light); color:var(--primary); }
+        #toast { position:fixed; bottom:25px; right:25px; background:#166534; color:white; padding:11px 20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.2); display:none; z-index:9999; font-size:0.9rem; max-width:calc(100vw - 50px); }
+        /* Blog card view on mobile */
+        .blog-card-list { display:flex; flex-direction:column; gap:12px; }
+        .blog-card-item { background:white; border-radius:10px; padding:14px 16px; box-shadow:var(--shadow-md); border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+        .blog-card-item .blog-info { flex:1; min-width:0; }
+        .blog-card-item .blog-title-text { font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--primary); margin-bottom:4px; }
+        .blog-card-item .blog-meta-text { font-size:0.78rem; color:#64748b; }
+        .blog-card-item .blog-actions { display:flex; gap:6px; flex-shrink:0; }
+        /* Collapsible blog form */
+        .collapsible-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none; padding:14px 18px; background:#f8fafc; border-radius:10px; border:1px solid var(--border-color); margin-bottom:8px; }
+        .collapsible-header h3 { margin:0; font-size:0.95rem; color:var(--primary); }
+        .collapsible-body { overflow:hidden; transition:max-height 0.3s ease; max-height:0; }
+        .collapsible-body.open { max-height:1000px; }
+        /* Edit Blog Modal */
+        #edit-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:5000; align-items:center; justify-content:center; padding:16px; }
+        #edit-modal.show { display:flex; }
+        #edit-modal-inner { background:white; border-radius:12px; padding:24px; width:100%; max-width:600px; position:relative; max-height:90vh; overflow-y:auto; }
+        #edit-modal-inner input, #edit-modal-inner textarea { width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; margin-bottom:12px; box-sizing:border-box; font-family:inherit; font-size:16px; }
+        /* form inputs — font-size 16px prevents iOS zoom */
+        input, select, textarea { font-size:16px !important; }
+        @media(max-width:768px) {
+            #dashboard-screen { padding:12px; }
+            .header { padding:12px 16px; }
+            .header h1 { font-size:1rem; }
+            .tabs { gap:6px; }
+            .tab-btn { padding:8px 12px; font-size:0.82rem; }
         }
-
-        body { margin: 0; background-color: var(--bg-light); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
-        .header { background: var(--white); padding: 20px 40px; box-shadow: var(--shadow-md); display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; }
-        
-        #login-screen { display: flex; flex: 1; align-items: center; justify-content: center; }
-        .login-card { background: var(--white); padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center; }
-        .login-card input { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn:hover { background: #0c3e69; }
-        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
-        .btn-success { background: var(--secondary); }
-        .btn-danger { background: #ef4444; }
-
-        #dashboard-screen { display: none; padding: 40px; flex: 1; }
-        .tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
-        .tab-btn { background: none; border: none; font-size: 1.1rem; font-weight: 600; color: #94a3b8; cursor: pointer; padding: 10px 15px; border-bottom: 3px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        .table-container { background: var(--white); border-radius: 12px; box-shadow: var(--shadow-md); overflow-x: auto; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
-        th { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: var(--primary-light); color: var(--primary); }
-        .badge-success { background: #dcfce7; color: #166534; }
-        .badge-warning { background: #fef08a; color: #854d0e; }
-
-        #toast { position: fixed; bottom: 30px; right: 30px; background: #166534; color: white; padding: 12px 22px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; z-index: 9999; }
     </style>
 </head>
-
 <body>
     <div id="toast"></div>
 
+    <!-- Blog Edit Modal -->
+    <div id="edit-modal">
+        <div id="edit-modal-inner">
+            <h3 style="margin-top:0;color:var(--primary)">Edit Blog Post</h3>
+            <input type="text" id="edit-title" placeholder="Title">
+            <input type="text" id="edit-category" placeholder="Category">
+            <label style="font-size:0.85rem;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Image</label>
+            <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+                <input type="url" id="edit-image" placeholder="Paste image URL" style="flex:1;padding:10px;border:1px solid var(--border-color);border-radius:8px;font-family:inherit;">
+                <label style="cursor:pointer;background:#f1f5f9;border:1px solid var(--border-color);border-radius:8px;padding:9px 14px;font-size:0.85rem;font-weight:600;white-space:nowrap;">📁 Upload
+                    <input type="file" id="edit-image-file" accept="image/*" style="display:none" onchange="handleImageUpload(this,'edit-image','edit-img-preview')">
+                </label>
+            </div>
+            <img id="edit-img-preview" src="" style="display:none;width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px;">
+            <textarea id="edit-excerpt" rows="3" placeholder="Short excerpt..."></textarea>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn" style="background:#64748b" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-success" onclick="saveEditBlog()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <div class="header">
-        <h1><i data-lucide="shield"></i> Clinic Portal</h1>
-        <div id="logout-btn" style="display:none; cursor:pointer; color: #ef4444;" onclick="logout()">
+        <h1><i data-lucide="activity"></i> Clinic Portal</h1>
+        <div id="logout-btn" style="display:none;cursor:pointer;color:#ef4444;font-weight:600;display:none;align-items:center;gap:6px;" onclick="logout()">
             <i data-lucide="log-out"></i> Logout
         </div>
     </div>
 
-    <!-- Login Screen -->
+    <!-- Login -->
     <div id="login-screen">
         <form class="login-card" onsubmit="login(event)">
-            <i data-lucide="lock" style="color: var(--primary); width: 48px; height: 48px;"></i>
-            <h2 style="color: var(--primary);">Doctor Login</h2>
-            <p style="color: #64748b; font-size: 0.9rem;">Enter passcode to manage website.</p>
-            <input type="password" id="passcode" placeholder="Passcode (try: admin123)" required>
-            <button class="btn" style="width: 100%;" type="submit">Access Dashboard</button>
-            <p id="error-msg" style="color: red; display: none; margin-top:10px;">Incorrect passcode</p>
+            <i data-lucide="lock" style="color:var(--primary);width:48px;height:48px;margin-bottom:12px;"></i>
+            <h2 style="margin:0 0 8px;color:var(--primary)">Doctor Access</h2>
+            <p style="color:#64748b;font-size:0.9rem;margin-bottom:0">Secure clinic management portal</p>
+            <input type="password" id="passcode" placeholder="Enter Passcode" required autofocus>
+            <button class="btn" style="width:100%;justify-content:center;padding:12px;" type="submit">Unlock Dashboard</button>
+            <p id="error-msg" style="color:#ef4444;display:none;margin-top:12px;font-size:0.9rem;">Incorrect passcode.</p>
         </form>
     </div>
 
     <!-- Dashboard -->
     <div id="dashboard-screen">
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('appointments')">Appointments</button>
-            <button class="tab-btn" onclick="switchTab('questions')">Q&A</button>
-            <button class="tab-btn" onclick="switchTab('reviews')">Reviews</button>
-            <button class="tab-btn" onclick="switchTab('blogs')">Blogs</button>
+            <button class="tab-btn active" id="tab-btn-appointments" onclick="switchTab('appointments', this)"><i data-lucide="calendar"></i> Appointments</button>
+            <button class="tab-btn" id="tab-btn-questions" onclick="switchTab('questions', this)"><i data-lucide="help-circle"></i> Q&A</button>
+            <button class="tab-btn" id="tab-btn-reviews" onclick="switchTab('reviews', this)"><i data-lucide="star"></i> Reviews</button>
+            <button class="tab-btn" id="tab-btn-blogs" onclick="switchTab('blogs', this)"><i data-lucide="file-text"></i> Blogs</button>
         </div>
 
         <!-- Appointments -->
         <div id="tab-appointments" class="tab-content active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: var(--primary);">Upcoming Appointments</h2>
-                <button onclick="fetchAppointments()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
+            <div class="sub-nav">
+                <button class="sub-btn active" id="btn-upcoming" onclick="filterApt('upcoming')">Upcoming</button>
+                <button class="sub-btn" id="btn-past" onclick="filterApt('past')">Past / Old</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h2 id="apt-title" style="margin:0;color:var(--primary);">Upcoming Appointments</h2>
+                <button onclick="fetchAppointments()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
             <div class="table-container">
-                <table>
-                    <thead><tr><th>Date</th><th>Patient</th><th>Phone</th><th>Slot</th><th>Message</th></tr></thead>
-                    <tbody id="apt-table"></tbody>
-                </table>
+                <table><thead><tr><th>Booked On</th><th>Patient</th><th>Phone</th><th>Date / Slot</th><th>Message</th><th>Status</th></tr></thead>
+                <tbody id="apt-table"></tbody></table>
             </div>
         </div>
 
-        <!-- Questions -->
+        <!-- Q&A -->
         <div id="tab-questions" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: var(--primary);">Patient Questions</h2>
-                <button onclick="fetchQuestions()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h2 style="margin:0;color:var(--primary);">Patient Questions</h2>
+                <button onclick="fetchQuestions()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
             <div class="table-container">
-                <table>
-                    <thead><tr><th>Date</th><th>Patient</th><th>Question</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody id="qa-table"></tbody>
-                </table>
+                <table><thead><tr><th>Date</th><th>Patient</th><th>Question</th><th>Status</th><th>Answer / Action</th><th>Website Visibility</th></tr></thead>
+                <tbody id="qa-table"></tbody></table>
             </div>
         </div>
 
         <!-- Reviews -->
         <div id="tab-reviews" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: var(--primary);">Patient Reviews</h2>
-                <button onclick="fetchReviews()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h2 style="margin:0;color:var(--primary);">Patient Reviews</h2>
+                <button onclick="fetchReviews()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
             <div class="table-container">
-                <table>
-                    <thead><tr><th>Patient</th><th>Rating</th><th>Review</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody id="reviews-table"></tbody>
-                </table>
+                <table><thead><tr><th>Patient</th><th>Rating</th><th>Review</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="reviews-table"></tbody></table>
             </div>
         </div>
 
         <!-- Blogs -->
         <div id="tab-blogs" class="tab-content">
-            <h2 style="color: var(--primary); margin-bottom: 20px;">Manage Blogs</h2>
-            
-            <form onsubmit="addBlog(event)" style="background: white; padding: 20px; border-radius: 12px; margin-bottom:20px; box-shadow: var(--shadow-md);">
-                <h3>Add New Blog</h3>
-                <input type="text" id="b-title" placeholder="Title" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
-                <input type="text" id="b-category" placeholder="Category" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
-                <input type="url" id="b-image" placeholder="Image URL" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
-                <textarea id="b-excerpt" placeholder="Short Excerpt" required rows="2" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;"></textarea>
-                <button class="btn btn-success" type="submit">Publish Blog</button>
+            <h2 style="color:var(--primary);margin-bottom:14px;">Manage Blog Posts</h2>
+            <!-- Collapsible Publish Form -->
+            <div class="collapsible-header" onclick="toggleBlogForm()" id="blog-form-header">
+                <h3><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> Publish New Article</h3>
+                <span id="blog-form-arrow" style="color:var(--primary);font-size:1.2rem;">▼</span>
+            </div>
+            <div class="collapsible-body" id="blog-form-body">
+            <form onsubmit="addBlog(event)" style="background:white;padding:20px;border-radius:0 0 12px 12px;margin-bottom:4px;box-shadow:var(--shadow-md);border:1px solid var(--border-color);border-top:none;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <input type="text" id="b-title" placeholder="Blog Title *" required style="padding:12px;border:1px solid var(--border-color);border-radius:8px;font-family:inherit;font-size:16px;box-sizing:border-box;">
+                    <input type="text" id="b-category" placeholder="Category *" required style="padding:12px;border:1px solid var(--border-color);border-radius:8px;font-family:inherit;font-size:16px;box-sizing:border-box;">
+                </div>
+                <label style="font-size:0.85rem;font-weight:600;color:#475569;display:block;margin-bottom:6px;">Image (URL or upload from device)</label>
+                <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+                    <input type="url" id="b-image" placeholder="Paste image URL" style="flex:1;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-family:inherit;font-size:16px;box-sizing:border-box;">
+                    <label style="cursor:pointer;background:#f1f5f9;border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;font-size:0.85rem;font-weight:600;white-space:nowrap;min-height:44px;display:flex;align-items:center;">📁 Upload
+                        <input type="file" id="b-image-file" accept="image/*" style="display:none" onchange="handleImageUpload(this,'b-image','b-img-preview')">
+                    </label>
+                </div>
+                <img id="b-img-preview" src="" style="display:none;width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-bottom:12px;">
+                <textarea id="b-excerpt" placeholder="Short patient-facing summary *" required rows="3" style="width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;margin-bottom:14px;box-sizing:border-box;font-family:inherit;font-size:16px;"></textarea>
+                <button class="btn btn-success" type="submit" style="width:100%;justify-content:center;padding:14px;"><i data-lucide="plus-circle"></i> Publish Article</button>
             </form>
-
-            <div class="table-container">
-                <table>
-                    <thead><tr><th>Title</th><th>Category</th><th>Action</th></tr></thead>
-                    <tbody id="blogs-table"></tbody>
-                </table>
+            </div>
+            <!-- Blog card list -->
+            <div id="blogs-card-list" class="blog-card-list" style="margin-top:16px;"></div>
+            <!-- Desktop table (hidden on small screens) -->
+            <div class="table-container" id="blogs-table-wrap" style="display:none;">
+                <table><thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Actions</th></tr></thead>
+                <tbody id="blogs-table"></tbody></table>
             </div>
         </div>
     </div>
@@ -184,158 +220,298 @@
     <script>
         lucide.createIcons();
 
-        function showToast(msg) {
+        const PASS = 'admin123';
+        let allApts = [], currentFilter = 'upcoming', editingBlogId = null;
+
+        function showToast(msg, err = false) {
             const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
+            t.innerText = msg; t.style.background = err ? '#991b1b' : '#166534';
+            t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 3000);
         }
 
-        // Simple Static Login
+        // ── Session Persistence ──
+        function checkSession() {
+            if (sessionStorage.getItem('jdc_admin_logged_in') === 'true') {
+                showDashboard();
+                const tab = sessionStorage.getItem('jdc_admin_tab') || 'appointments';
+                activateTab(tab);
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'flex';
+        }
+
         function login(e) {
             e.preventDefault();
-            if(document.getElementById('passcode').value === 'admin123') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('dashboard-screen').style.display = 'block';
-                document.getElementById('logout-btn').style.display = 'block';
-                fetchAppointments();
+            if (document.getElementById('passcode').value === PASS) {
+                sessionStorage.setItem('jdc_admin_logged_in', 'true');
+                showDashboard();
+                activateTab('appointments');
             } else {
                 document.getElementById('error-msg').style.display = 'block';
             }
         }
 
         function logout() {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('dashboard-screen').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'none';
-            document.getElementById('passcode').value = '';
+            sessionStorage.removeItem('jdc_admin_logged_in');
+            sessionStorage.removeItem('jdc_admin_tab');
+            window.location.reload();
         }
 
-        function switchTab(tabId) {
+        function activateTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
-            event.target.classList.add('active');
-            
-            if(tabId === 'appointments') fetchAppointments();
-            if(tabId === 'questions') fetchQuestions();
-            if(tabId === 'reviews') fetchReviews();
-            if(tabId === 'blogs') fetchBlogs();
+            const tabEl = document.getElementById('tab-' + tabId);
+            const btnEl = document.getElementById('tab-btn-' + tabId);
+            if (tabEl) tabEl.classList.add('active');
+            if (btnEl) btnEl.classList.add('active');
+            sessionStorage.setItem('jdc_admin_tab', tabId);
+            if (tabId === 'appointments') fetchAppointments();
+            else if (tabId === 'questions') fetchQuestions();
+            else if (tabId === 'reviews') fetchReviews();
+            else if (tabId === 'blogs') fetchBlogs();
         }
 
-        // --- Fetch Logic ---
+        function switchTab(tabId, btn) { activateTab(tabId); }
+
+        // ── Appointments ──
+        function filterApt(type) {
+            currentFilter = type;
+            document.getElementById('btn-upcoming').classList.toggle('active', type === 'upcoming');
+            document.getElementById('btn-past').classList.toggle('active', type === 'past');
+            document.getElementById('apt-title').innerText = type === 'upcoming' ? 'Upcoming Appointments' : 'Past Appointments';
+            renderApts();
+        }
+
         async function fetchAppointments() {
-            const t = document.getElementById('apt-table');
-            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
             try {
-                const q = window.query(window.collection(window.db, "appointments"), window.orderBy("createdAt", "desc"));
-                const snap = await window.getDocs(q);
-                t.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    t.innerHTML += `<tr>
-                        <td>${d.createdAt?.toDate().toLocaleDateString() || 'New'}</td>
-                        <td><strong>${d.name}</strong></td>
-                        <td>${d.phone}</td>
-                        <td>${d.preferredDate} <br><small>${d.preferredTime}</small></td>
-                        <td>${d.message}</td>
-                    </tr>`;
-                });
-                if(snap.empty) t.innerHTML = '<tr><td colspan="5">No appointments yet.</td></tr>';
-            } catch(e) { console.error(e); t.innerHTML = '<tr><td colspan="5">Error loading data.</td></tr>'; }
+                const snap = await window.getDocs(window.collection(window.db, "appointments"));
+                allApts = [];
+                snap.forEach(d => allApts.push({ id: d.id, ...d.data() }));
+                allApts.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+                renderApts(); showToast('✓ Appointments loaded');
+            } catch(e) { console.error(e); showToast('Error loading: ' + e.message, true); }
         }
 
+        // Maps time slot label → end hour (24h) for precise past/upcoming detection
+        const SLOT_END_HOURS = {
+            '2:00 PM - 3:00 PM': 15,
+            '3:00 PM - 4:00 PM': 16,
+            '4:00 PM - 5:00 PM': 17,
+            '5:00 PM - 6:00 PM': 18,
+            '6:00 PM - 7:00 PM': 19,
+            '7:00 PM - 8:00 PM': 20,
+        };
+
+        function isAptPast(apt) {
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('en-CA'); // YYYY-MM-DD local
+            const aptDate = apt.preferredDate || '';
+
+            if (aptDate < todayStr) return true;   // earlier date → always past
+            if (aptDate > todayStr) return false;  // future date → always upcoming
+
+            // Same day: check if the slot's end hour has passed
+            const endHour = SLOT_END_HOURS[apt.preferredTime] ?? 20; // default 8PM
+            return now.getHours() >= endHour;
+        }
+
+        function renderApts() {
+            const t = document.getElementById('apt-table');
+            const filtered = allApts.filter(a =>
+                currentFilter === 'upcoming' ? !isAptPast(a) : isAptPast(a)
+            );
+            t.innerHTML = '';
+            filtered.forEach(a => {
+                const booked = a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString() : 'New';
+                const badge = currentFilter === 'upcoming'
+                    ? '<span class="badge badge-pending">Upcoming</span>'
+                    : '<span class="badge badge-past">Done</span>';
+                t.innerHTML += `<tr>
+                    <td><small style="color:#64748b">${booked}</small></td>
+                    <td><strong>${a.name}</strong></td>
+                    <td><a href="tel:${a.phone}" style="color:var(--primary)">${a.phone}</a></td>
+                    <td><strong>${a.preferredDate}</strong><br><small style="color:#64748b">${a.preferredTime}</small></td>
+                    <td style="max-width:180px;font-size:0.85rem">${a.message || '--'}</td>
+                    <td>${badge}</td>
+                </tr>`;
+            });
+            if (!filtered.length) t.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No ${currentFilter} appointments.</td></tr>`;
+        }
+
+        // ── Q&A ──
         async function fetchQuestions() {
             const t = document.getElementById('qa-table');
-            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+            t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">Loading...</td></tr>';
             try {
-                const q = window.query(window.collection(window.db, "questions"), window.orderBy("createdAt", "desc"));
-                const snap = await window.getDocs(q);
+                const snap = await window.getDocs(window.collection(window.db, "questions"));
+                const docs = [];
+                snap.forEach(d => docs.push({id: d.id, ...d.data()}));
+                docs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
                 t.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const id = doc.id;
-                    const status = d.answered ? '<span class="badge badge-success">Answered</span>' : '<span class="badge badge-warning">Pending</span>';
-                    const action = d.answered ? `<small>${d.answerText}</small>` : `
-                        <input type="text" id="ans-${id}" placeholder="Type answer..." style="padding:4px; width:150px;">
-                        <button onclick="answerQuestion('${id}')" class="btn btn-sm btn-success">Save</button>`;
-                    
+                docs.forEach(d => {
+                    const id = d.id;
+                    const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : 'New';
+                    const status = d.answered ? '<span class="badge badge-live">✓ Answered</span>' : '<span class="badge badge-pending">Pending</span>';
+                    const action = d.answered
+                        ? `<small style="color:#166534">✓ "${d.answerText}"</small>`
+                        : `<div style="display:flex;gap:6px;"><input type="text" id="ans-${id}" placeholder="Type answer..." style="padding:6px;border-radius:6px;border:1px solid #ddd;flex:1;min-width:120px;font-family:inherit;font-size:0.85rem;"><button onclick="answerQ('${id}')" class="btn btn-sm btn-success">Save</button></div>`;
+                    // Visibility toggle – only for answered questions
+                    const isVisible = d.showOnWebsite !== false; // defaults to true if not set
+                    const visBtn = d.answered
+                        ? `<button onclick="toggleQAVisibility('${id}',${isVisible})" class="btn btn-sm" style="background:${isVisible ? '#166534' : '#64748b'};min-width:80px">
+                            ${isVisible ? '👁 Showing' : '🚫 Hidden'}
+                           </button>`
+                        : '<span style="color:#94a3b8;font-size:0.8rem;">Not answered</span>';
                     t.innerHTML += `<tr>
-                        <td>${d.createdAt?.toDate().toLocaleDateString() || 'New'}</td>
+                        <td><small>${date}</small></td>
                         <td><strong>${d.patientName}</strong></td>
-                        <td>${d.questionText}</td>
+                        <td style="max-width:180px">${d.questionText}</td>
                         <td>${status}</td>
-                        <td>${action}</td>
+                        <td style="min-width:200px">${action}</td>
+                        <td>${visBtn}</td>
                     </tr>`;
                 });
-            } catch(e) { console.error(e); }
+                if (!docs.length) t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No questions yet.</td></tr>';
+            } catch(e) { console.error(e); showToast('Error: ' + e.message, true); }
         }
 
-        window.answerQuestion = async function(id) {
-            const ans = document.getElementById('ans-' + id).value;
-            if(!ans) return alert('Enter an answer');
-            await window.updateDoc(window.doc(window.db, "questions", id), {
-                answerText: ans,
-                answered: true
-            });
-            showToast("Question answered!");
+        window.answerQ = async function(id) {
+            const ans = document.getElementById('ans-' + id).value.trim();
+            if (!ans) return alert('Please type an answer.');
+            // answered=true, showOnWebsite=true by default
+            await window.updateDoc(window.doc(window.db, "questions", id), { answerText: ans, answered: true, showOnWebsite: true });
+            showToast('✓ Answer saved! Now visible on the website.'); fetchQuestions();
+        };
+
+        window.toggleQAVisibility = async function(id, currentlyVisible) {
+            const newVal = !currentlyVisible;
+            await window.updateDoc(window.doc(window.db, "questions", id), { showOnWebsite: newVal });
+            showToast(newVal ? '✓ Q&A is now visible on website' : 'Q&A hidden from website');
             fetchQuestions();
-        }
+        };
 
+        // ── Reviews ──
         async function fetchReviews() {
             const t = document.getElementById('reviews-table');
-            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+            t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px">Loading...</td></tr>';
             try {
-                const q = window.query(window.collection(window.db, "reviews"), window.orderBy("createdAt", "desc"));
-                const snap = await window.getDocs(q);
+                const snap = await window.getDocs(window.collection(window.db, "reviews"));
+                const docs = [];
+                snap.forEach(d => docs.push({id: d.id, ...d.data()}));
+                docs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
                 t.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const id = doc.id;
-                    const status = d.approved ? '<span class="badge badge-success">Live</span>' : '<span class="badge badge-warning">Pending</span>';
-                    const action = d.approved ? '' : `<button onclick="approveReview('${id}')" class="btn btn-sm btn-success">Approve</button>`;
-                    
+                docs.forEach(d => {
+                    const id = d.id;
+                    const isLive = d.approved && d.showOnWebsite !== false;
+                    const statusBadge = !d.approved
+                        ? '<span class="badge badge-pending">Needs Approval</span>'
+                        : isLive
+                            ? '<span class="badge badge-live">Live ✓</span>'
+                            : '<span class="badge" style="background:#fef3c7;color:#92400e;">Approved / Hidden</span>';
+                    const approveBtn = !d.approved
+                        ? `<button onclick="approveRev('${id}')" class="btn btn-sm btn-success" style="margin-right:5px">✓ Approve</button>`
+                        : '';
+                    // Show/Hide toggle only for approved reviews
+                    const visBtn = d.approved
+                        ? `<button onclick="toggleRevVisibility('${id}',${isLive})" class="btn btn-sm" style="background:${isLive ? '#166534' : '#64748b'};margin-right:5px;min-width:80px">
+                            ${isLive ? '👁 Showing' : '🚫 Hidden'}
+                           </button>`
+                        : '';
                     t.innerHTML += `<tr>
                         <td><strong>${d.patientName}</strong></td>
-                        <td>${'★'.repeat(d.rating)}</td>
-                        <td>${d.comment}</td>
-                        <td>${status}</td>
-                        <td>${action} <button onclick="deleteReview('${id}')" class="btn btn-sm btn-danger"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>
+                        <td style="color:#f59e0b;font-size:1.1rem">${'★'.repeat(d.rating)}</td>
+                        <td style="max-width:220px;font-size:0.9rem">"${d.comment}"</td>
+                        <td>${statusBadge}</td>
+                        <td>${approveBtn}${visBtn}<button onclick="deleteRev('${id}')" class="btn btn-sm btn-danger"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td>
                     </tr>`;
                 });
                 lucide.createIcons();
-            } catch(e) { console.error(e); }
+                if (!docs.length) t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8">No reviews yet.</td></tr>';
+            } catch(e) { console.error(e); showToast('Error loading reviews: ' + e.message, true); }
         }
 
-        window.approveReview = async function(id) {
-            await window.updateDoc(window.doc(window.db, "reviews", id), { approved: true });
-            showToast("Review approved & live!");
+        window.approveRev = async function(id) {
+            // When approving, default showOnWebsite to true
+            await window.updateDoc(window.doc(window.db, "reviews", id), { approved: true, showOnWebsite: true });
+            showToast('✓ Review approved and now live!'); fetchReviews();
+        };
+
+        window.toggleRevVisibility = async function(id, currentlyVisible) {
+            const newVal = !currentlyVisible;
+            await window.updateDoc(window.doc(window.db, "reviews", id), { showOnWebsite: newVal });
+            showToast(newVal ? '✓ Review is now visible on website' : 'Review hidden from website');
             fetchReviews();
-        }
-        
-        window.deleteReview = async function(id) {
-            if(!confirm('Delete this review?')) return;
+        };
+        window.deleteRev = async function(id) {
+            if (!confirm('Delete this review permanently?')) return;
             await window.deleteDoc(window.doc(window.db, "reviews", id));
-            showToast("Review deleted!");
-            fetchReviews();
-        }
+            showToast('Review removed.'); fetchReviews();
+        };
+
+        // ── Blogs ──
+        let blogDataMap = {};
+
+        window.toggleBlogForm = function() {
+            const body = document.getElementById('blog-form-body');
+            const arrow = document.getElementById('blog-form-arrow');
+            if (body.classList.contains('open')) {
+                body.classList.remove('open');
+                arrow.style.transform = 'rotate(0deg)';
+            } else {
+                body.classList.add('open');
+                arrow.style.transform = 'rotate(180deg)';
+            }
+        };
 
         async function fetchBlogs() {
             const t = document.getElementById('blogs-table');
-            t.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+            const cList = document.getElementById('blogs-card-list');
+            t.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px">Loading...</td></tr>';
+            cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">Loading...</div>';
             try {
-                const q = window.query(window.collection(window.db, "blogs"), window.orderBy("date", "desc"));
-                const snap = await window.getDocs(q);
+                const snap = await window.getDocs(window.collection(window.db, "blogs"));
+                blogDataMap = {};
+                const docs = [];
+                snap.forEach(d => { blogDataMap[d.id] = d.data(); docs.push({id:d.id,...d.data()}); });
+                docs.sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+                
                 t.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    t.innerHTML += `<tr>
-                        <td><strong>${d.title}</strong></td>
+                cList.innerHTML = '';
+                
+                docs.forEach(d => {
+                    const tr = `<tr>
+                        <td><small style="color:#64748b">${d.date}</small></td>
+                        <td><strong>${d.title}</strong><br><small style="color:#64748b">${(d.excerpt||'').substring(0,60)}...</small></td>
                         <td><span class="badge">${d.category}</span></td>
-                        <td><button onclick="deleteBlog('${doc.id}')" class="btn btn-sm btn-danger">Delete</button></td>
+                        <td>
+                            <button onclick="openEditBlog('${d.id}')" class="btn btn-sm" style="margin-right:5px;background:#6366f1"><i data-lucide="pencil" style="width:13px;height:13px;"></i> Edit</button>
+                            <button onclick="deleteBlog('${d.id}')" class="btn btn-sm btn-danger"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete</button>
+                        </td>
                     </tr>`;
+                    t.innerHTML += tr;
+                    
+                    const card = `<div class="blog-card-item">
+                        <div class="blog-info">
+                            <div class="blog-title-text">${d.title}</div>
+                            <div class="blog-meta-text">${d.date} • <span class="badge" style="font-size:0.65rem">${d.category}</span></div>
+                        </div>
+                        <div class="blog-actions">
+                            <button onclick="openEditBlog('${d.id}')" class="btn btn-sm" style="background:#6366f1;padding:6px 10px;min-height:36px;"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button>
+                            <button onclick="deleteBlog('${d.id}')" class="btn btn-sm btn-danger" style="padding:6px 10px;min-height:36px;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+                        </div>
+                    </div>`;
+                    cList.innerHTML += card;
                 });
-            } catch(e) { console.error(e); }
+                lucide.createIcons();
+                if (!docs.length) {
+                    t.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#94a3b8">No blogs yet.</td></tr>';
+                    cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">No blogs yet.</div>';
+                }
+            } catch(e) { console.error(e); showToast('Error: ' + e.message, true); }
         }
 
         window.addBlog = async function(e) {
@@ -345,20 +521,76 @@
                 category: document.getElementById('b-category').value,
                 image: document.getElementById('b-image').value,
                 excerpt: document.getElementById('b-excerpt').value,
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
             };
             await window.addDoc(window.collection(window.db, "blogs"), payload);
-            showToast("Blog published!");
-            e.target.reset();
-            fetchBlogs();
-        }
+            showToast('✓ Blog published successfully!'); e.target.reset(); fetchBlogs();
+        };
 
         window.deleteBlog = async function(id) {
-            if(!confirm('Delete this blog?')) return;
+            if (!confirm('Delete this blog post?')) return;
             await window.deleteDoc(window.doc(window.db, "blogs", id));
-            showToast("Blog deleted!");
-            fetchBlogs();
+            showToast('Blog deleted.'); fetchBlogs();
+        };
+
+        window.openEditBlog = function(id) {
+            const d = blogDataMap[id];
+            if (!d) return alert('Blog data not found. Please refresh.');
+            editingBlogId = id;
+            document.getElementById('edit-title').value = d.title || '';
+            document.getElementById('edit-category').value = d.category || '';
+            document.getElementById('edit-image').value = d.image || '';
+            document.getElementById('edit-excerpt').value = d.excerpt || '';
+            document.getElementById('edit-modal').classList.add('show');
+        };
+
+        window.closeEditModal = function() {
+            editingBlogId = null;
+            document.getElementById('edit-modal').classList.remove('show');
+        };
+
+        window.saveEditBlog = async function() {
+            if (!editingBlogId) return;
+            const updated = {
+                title: document.getElementById('edit-title').value,
+                category: document.getElementById('edit-category').value,
+                image: document.getElementById('edit-image').value,
+                excerpt: document.getElementById('edit-excerpt').value
+            };
+            await window.updateDoc(window.doc(window.db, "blogs", editingBlogId), updated);
+            showToast('✓ Blog updated!'); closeEditModal(); fetchBlogs();
+        };
+
+        // Close edit modal on backdrop click
+        document.getElementById('edit-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+
+        // Image upload handler (converts file to base64)
+        window.handleImageUpload = function(input, urlFieldId, previewId) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 900000) {
+                alert('Image too large (max ~900KB). Please compress or use a URL instead.');
+                input.value = ''; return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(urlFieldId).value = e.target.result;
+                const preview = document.getElementById(previewId);
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // ── Init: wait for Firebase before doing anything that needs Firestore ──
+        function onFirebaseReady(cb) {
+            if (window._firebaseReady) { cb(); return; }
+            window.addEventListener('firebase-ready', cb, { once: true });
         }
+
+        onFirebaseReady(() => checkSession());
     </script>
 </body>
 </html>
