@@ -85,6 +85,12 @@
             .header h1 { font-size:1rem; }
             .tabs { gap:6px; }
             .tab-btn { padding:8px 12px; font-size:0.82rem; }
+            #blogs-table-wrap, #apt-table-wrap { display:none !important; }
+            #blogs-card-list, #apt-card-list { display:flex !important; }
+        }
+        @media(min-width:769px) {
+            #blogs-card-list, #apt-card-list { display:none !important; }
+            #blogs-table-wrap, #apt-table-wrap { display:block !important; }
         }
     </style>
 </head>
@@ -151,7 +157,8 @@
                 <h2 id="apt-title" style="margin:0;color:var(--primary);">Upcoming Appointments</h2>
                 <button onclick="fetchAppointments()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
-            <div class="table-container">
+            <div id="apt-card-list" class="blog-card-list"></div>
+            <div class="table-container" id="apt-table-wrap">
                 <table><thead><tr><th>Booked On</th><th>Patient</th><th>Phone</th><th>Date / Slot</th><th>Message</th><th>Status</th></tr></thead>
                 <tbody id="apt-table"></tbody></table>
             </div>
@@ -321,15 +328,18 @@
 
         function renderApts() {
             const t = document.getElementById('apt-table');
+            const cList = document.getElementById('apt-card-list');
             const filtered = allApts.filter(a =>
                 currentFilter === 'upcoming' ? !isAptPast(a) : isAptPast(a)
             );
             t.innerHTML = '';
+            cList.innerHTML = '';
             filtered.forEach(a => {
                 const booked = a.createdAt?.toDate ? a.createdAt.toDate().toLocaleDateString() : 'New';
                 const badge = currentFilter === 'upcoming'
                     ? '<span class="badge badge-pending">Upcoming</span>'
                     : '<span class="badge badge-past">Done</span>';
+                
                 t.innerHTML += `<tr>
                     <td><small style="color:#64748b">${booked}</small></td>
                     <td><strong>${a.name}</strong></td>
@@ -338,8 +348,25 @@
                     <td style="max-width:180px;font-size:0.85rem">${a.message || '--'}</td>
                     <td>${badge}</td>
                 </tr>`;
+
+                cList.innerHTML += `<div class="blog-card-item" style="flex-direction:column;gap:8px;">
+                    <div style="display:flex;justify-content:space-between;width:100%;">
+                        <div><strong>${a.name}</strong></div>
+                        <div>${badge}</div>
+                    </div>
+                    <div style="font-size:0.85rem;color:#64748b;">
+                        <i data-lucide="calendar" style="width:14px;height:14px;vertical-align:middle;"></i> ${a.preferredDate} &nbsp; 
+                        <i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;"></i> ${a.preferredTime}
+                    </div>
+                    <div style="font-size:0.85rem;"><a href="tel:${a.phone}" style="color:var(--primary);text-decoration:none;"><i data-lucide="phone" style="width:14px;height:14px;vertical-align:middle;"></i> ${a.phone}</a></div>
+                    ${a.message ? `<div style="font-size:0.85rem;background:#f8fafc;padding:8px;border-radius:6px;margin-top:4px;">"${a.message}"</div>` : ''}
+                </div>`;
             });
-            if (!filtered.length) t.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No ${currentFilter} appointments.</td></tr>`;
+            lucide.createIcons();
+            if (!filtered.length) {
+                t.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No ${currentFilter} appointments.</td></tr>`;
+                cList.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8">No ${currentFilter} appointments.</div>`;
+            }
         }
 
         // ── Q&A ──
