@@ -15,6 +15,65 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1UGjRCWZdcv-0BeZFUEv7Lt-TMB8UGQ8",
+            authDomain: "jeevan-deep-clinic.firebaseapp.com",
+            projectId: "jeevan-deep-clinic",
+            storageBucket: "jeevan-deep-clinic.firebasestorage.app",
+            messagingSenderId: "430805836459",
+            appId: "1:430805836459:web:8a9462b96ffae6bc3c4dee",
+            measurementId: "G-X5VP4Z285M"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Load Blogs from Firestore
+        async function loadBlogs() {
+            const blogGrid = document.getElementById('blog-grid');
+            if (!blogGrid) return;
+
+            try {
+                const q = query(collection(db, "blogs"), orderBy("date", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    blogGrid.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">No blog posts available yet. Check back soon!</p>';
+                    return;
+                }
+
+                blogGrid.innerHTML = '';
+                querySnapshot.forEach(doc => {
+                    const blog = doc.data();
+                    const card = `
+                        <article class="blog-card" data-aos="fade-up">
+                            <div class="blog-image">
+                                <img src="${blog.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2070&auto=format&fit=crop'}" alt="${blog.title}">
+                                <div class="blog-category">${blog.category || 'Dental Care'}</div>
+                            </div>
+                            <div class="blog-content">
+                                <div class="blog-date"><i data-lucide="calendar"></i> ${blog.date}</div>
+                                <h3 class="blog-title">${blog.title}</h3>
+                                <p class="blog-excerpt">${blog.excerpt}</p>
+                                <a href="#" class="read-more">Read Full Article <i data-lucide="arrow-right"></i></a>
+                            </div>
+                        </article>`;
+                    blogGrid.innerHTML += card;
+                });
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Error loading blogs:", error);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadBlogs);
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN9CZN9RRW"></script>
     <script>

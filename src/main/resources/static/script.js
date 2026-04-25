@@ -53,29 +53,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 phone: document.getElementById('phone').value,
                 preferredDate: document.getElementById('date').value,
                 preferredTime: document.getElementById('time').value,
-                message: document.getElementById('message').value
+                message: document.getElementById('message').value,
+                status: 'PENDING'
             };
 
             try {
-                const response = await fetch('/api/appointments', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(appointmentData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert(result.message || 'Appointment successfully booked!');
+                if (window.db) {
+                    const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+                    await addDoc(collection(window.db, "appointments"), {
+                        ...appointmentData,
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    // WhatsApp Redirect
+                    const waText = `Hello Jeevan Deep Clinic, I am ${appointmentData.name}. I would like to book an appointment on ${appointmentData.preferredDate} around ${appointmentData.preferredTime}.`;
+                    const waUrl = `https://wa.me/918317035904?text=${encodeURIComponent(waText)}`;
+                    
+                    alert('Appointment successfully received! Opening WhatsApp to confirm...');
+                    window.open(waUrl, '_blank');
                     appointmentForm.reset();
-                } else {
-                    alert('Failed to book appointment. Please try again.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred. Please check your connection and try again.');
+                alert('An error occurred. Please try again.');
             } finally {
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
@@ -126,16 +126,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = questionForm.querySelector('button[type="submit"]');
             btn.innerText = 'Submitting...'; btn.disabled = true;
             try {
-                const res = await fetch('/api/questions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ patientName: document.getElementById('q-name').value, questionText: document.getElementById('q-text').value })
-                });
-                const data = await res.json();
-                alert(data.message || 'Question submitted!');
-                questionForm.reset();
-                questionModal.style.display = 'none';
+                const qData = { 
+                    patientName: document.getElementById('q-name').value, 
+                    questionText: document.getElementById('q-text').value,
+                    answered: false
+                };
+                
+                if (window.db) {
+                    const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+                    await addDoc(collection(window.db, "questions"), {
+                        ...qData,
+                        createdAt: serverTimestamp()
+                    });
+                    alert('Question submitted! The doctor will answer it shortly.');
+                    questionForm.reset();
+                    questionModal.style.display = 'none';
+                }
             } catch (err) {
+                console.error(err);
                 alert('An error occurred. Please try again.');
             } finally {
                 btn.innerText = 'Submit Question'; btn.disabled = false;
@@ -143,25 +151,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Load doctor-answered Q&As dynamically
+    // Load doctor-answered Q&As dynamically from Firebase
     async function loadDynamicQA() {
         const container = document.getElementById('dynamic-qa');
-        if (!container) return;
+        if (!container || !window.db) return;
         try {
-            const res = await fetch('/api/questions/public');
-            if (!res.ok) return;
-            const questions = await res.json();
+            const { collection, getDocs, query, where, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+            // Show only answered questions
+            const q = query(collection(window.db, "questions"), where("answered", "==", true), orderBy("createdAt", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            
             container.innerHTML = '';
-            questions.forEach(q => {
+            querySnapshot.forEach(doc => {
+                const qData = doc.data();
                 const item = document.createElement('div');
                 item.className = 'faq-item';
                 item.innerHTML = `
                     <div class="faq-question">
-                        <span>${q.questionText} <small style="color:#10b981; font-size:0.75rem; margin-left:8px;">— ${q.patientName}</small></span>
+                        <span>${qData.questionText} <small style="color:#10b981; font-size:0.75rem; margin-left:8px;">— ${qData.patientName}</small></span>
                         <div class="faq-icon"><i data-lucide="plus"></i></div>
                     </div>
                     <div class="faq-answer">
-                        <p>${q.answerText}</p>
+                        <p>${qData.answerText || 'The doctor will answer this shortly!'}</p>
                     </div>`;
                 container.appendChild(item);
 
@@ -206,22 +217,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const reviewData = {
                 patientName: document.getElementById('review-name').value,
                 rating: parseInt(document.getElementById('review-rating').value),
-                comment: document.getElementById('review-comment').value
+                comment: document.getElementById('review-comment').value,
+                approved: false // Doctor needs to approve
             };
 
             try {
-                const response = await fetch('/api/reviews', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(reviewData)
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    alert(result.message || 'Review submitted successfully!');
+                if (window.db) {
+                    const { collection, addDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+                    await addDoc(collection(window.db, "reviews"), {
+                        ...reviewData,
+                        createdAt: serverTimestamp()
+                    });
+                    alert('Review submitted! It will appear on the site once approved.');
                     reviewForm.reset();
                     reviewModal.style.display = 'none';
-                } else {
-                    alert('Failed to submit review.');
                 }
             } catch (error) {
                 console.error(error);
@@ -234,44 +243,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Load Approved Reviews
+    // Load Approved Reviews from Firebase
     async function loadReviews() {
         const reviewsContainer = document.getElementById('dynamic-reviews');
-        if(!reviewsContainer) return;
+        if(!reviewsContainer || !window.db) return;
 
         try {
-            const response = await fetch('/api/reviews/public');
-            if(response.ok) {
-                const reviews = await response.json();
-                reviewsContainer.innerHTML = ''; // Clear out loading state
-                
-                if(reviews.length === 0) {
-                    reviewsContainer.innerHTML = '<p style="text-align: center; width: 100%; color: var(--text-muted);">No reviews yet. Be the first to write one!</p>';
-                    return;
-                }
-
-                reviews.forEach((review, index) => {
-                    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                    const initial = review.patientName.charAt(0).toUpperCase();
-                    // Basic animation delay cascade
-                    const delay = (index % 3) * 100;
-                    
-                    const card = `
-                    <div class="testimonial-card" data-aos="fade-up" data-aos-delay="${delay}">
-                        <div class="quote-icon"><i data-lucide="quote"></i></div>
-                        <div class="stars">${stars}</div>
-                        <p>"${review.comment}"</p>
-                        <div class="patient-profile">
-                            <div class="patient-avatar">${initial}</div>
-                            <div class="patient-info">
-                                <strong>${review.patientName}</strong>
-                            </div>
-                        </div>
-                    </div>`;
-                    reviewsContainer.innerHTML += card;
-                });
-                // Re-init icons for new cards
-                lucide.createIcons();
+            const { collection, getDocs, query, where, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+            // Only show approved reviews
+            const q = query(collection(window.db, "reviews"), where("approved", "==", true), orderBy("createdAt", "desc"), limit(6));
+            const querySnapshot = await getDocs(q);
+            
+            reviewsContainer.innerHTML = '';
+            
+            if(querySnapshot.empty) {
+                reviewsContainer.innerHTML = '<p style="text-align: center; width: 100%; color: var(--text-muted);">No reviews yet. Be the first to write one!</p>';
+                return;
             }
+
+            let index = 0;
+            querySnapshot.forEach((doc) => {
+                const review = doc.data();
+                const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                const initial = review.patientName.charAt(0).toUpperCase();
+                const delay = (index % 3) * 100;
+                
+                const card = `
+                <div class="testimonial-card" data-aos="fade-up" data-aos-delay="${delay}">
+                    <div class="quote-icon"><i data-lucide="quote"></i></div>
+                    <div class="stars">${stars}</div>
+                    <p>"${review.comment}"</p>
+                    <div class="patient-profile">
+                        <div class="patient-avatar">${initial}</div>
+                        <div class="patient-info">
+                            <strong>${review.patientName}</strong>
+                        </div>
+                    </div>
+                </div>`;
+                reviewsContainer.innerHTML += card;
+                index++;
+            });
+            lucide.createIcons();
         } catch (error) {
             console.error("Could not fetch reviews:", error);
         }

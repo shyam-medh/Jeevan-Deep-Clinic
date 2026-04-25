@@ -4,14 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard | Jeevan Deep Clinic (Dental & Eye Clinic)</title>
+    <title>Doctor Dashboard | Jeevan Deep Clinic</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1UGjRCWZdcv-0BeZFUEv7Lt-TMB8UGQ8",
+            authDomain: "jeevan-deep-clinic.firebaseapp.com",
+            projectId: "jeevan-deep-clinic",
+            storageBucket: "jeevan-deep-clinic.firebasestorage.app",
+            messagingSenderId: "430805836459",
+            appId: "1:430805836459:web:8a9462b96ffae6bc3c4dee"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make functions globally available for inline onclick handlers
+        window.db = db;
+        window.getDocs = getDocs;
+        window.collection = collection;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.addDoc = addDoc;
+        window.doc = doc;
+        window.serverTimestamp = serverTimestamp;
+    </script>
 
     <style>
         :root {
@@ -26,237 +54,41 @@
             font-family: 'Inter', sans-serif;
         }
 
-        body {
-            margin: 0;
-            background-color: var(--bg-light);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        body { margin: 0; background-color: var(--bg-light); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+        .header { background: var(--white); padding: 20px 40px; box-shadow: var(--shadow-md); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; }
+        
+        #login-screen { display: flex; flex: 1; align-items: center; justify-content: center; }
+        .login-card { background: var(--white); padding: 40px; border-radius: 12px; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center; }
+        .login-card input { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn:hover { background: #0c3e69; }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+        .btn-success { background: var(--secondary); }
+        .btn-danger { background: #ef4444; }
 
-        .header {
-            background: var(--white);
-            padding: 20px 40px;
-            box-shadow: var(--shadow-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        #dashboard-screen { display: none; padding: 40px; flex: 1; }
+        .tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .tab-btn { background: none; border: none; font-size: 1.1rem; font-weight: 600; color: #94a3b8; cursor: pointer; padding: 10px 15px; border-bottom: 3px solid transparent; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .header h1 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--primary);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .table-container { background: var(--white); border-radius: 12px; box-shadow: var(--shadow-md); overflow-x: auto; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; background: var(--primary-light); color: var(--primary); }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef08a; color: #854d0e; }
 
-        /* Login Screen */
-        #login-screen {
-            display: flex;
-            flex: 1;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            background: var(--white);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-card input {
-            width: 100%;
-            padding: 12px;
-            margin: 20px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-            transition: 0.3s;
-        }
-
-        .btn:hover {
-            background: #0c3e69;
-        }
-
-        /* Dashboard Screen */
-        #dashboard-screen {
-            display: none;
-            padding: 40px;
-            flex: 1;
-        }
-
-        .table-container {
-            background: var(--white);
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th,
-        td {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background: #fdfdfd;
-        }
-
-        .empty-state {
-            padding: 40px;
-            text-align: center;
-            color: #94a3b8;
-        }
-
-        .badge {
-            background: var(--secondary);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        /* ---- Responsive: Mobile card layout for tables ---- */
-        @media (max-width: 768px) {
-            .header { padding: 14px 16px; }
-            .header h1 { font-size: 1.1rem; }
-            #dashboard-screen { padding: 16px; }
-
-            /* Hide thead and convert rows to cards */
-            .table-container table thead { display: none; }
-            .table-container table,
-            .table-container tbody,
-            .table-container tr,
-            .table-container td { display: block; width: 100%; box-sizing: border-box; }
-
-            .table-container tr {
-                background: white;
-                border-radius: 10px;
-                margin-bottom: 12px;
-                padding: 12px 14px;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-                border-bottom: none !important;
-            }
-            .table-container td {
-                padding: 5px 0;
-                border: none;
-                display: flex;
-                align-items: flex-start;
-                gap: 8px;
-                font-size: 0.88rem;
-                flex-wrap: wrap;
-            }
-            .table-container td::before {
-                content: attr(data-label);
-                font-weight: 700;
-                color: var(--primary);
-                min-width: 120px;
-                font-size: 0.75rem;
-                text-transform: uppercase;
-                letter-spacing: 0.02em;
-            }
-            .tabs { flex-wrap: wrap; gap: 4px; }
-            .tab-btn { font-size: 0.9rem; padding: 8px 4px; }
-        }
-
-        /* Toast notification */
-        #toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #166534;
-            color: white;
-            padding: 12px 22px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 9999;
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
-        }
+        #toast { position: fixed; bottom: 30px; right: 30px; background: #166534; color: white; padding: 12px 22px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; z-index: 9999; }
     </style>
-
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SN9CZN9RRW"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-SN9CZN9RRW');
-    </script>
 </head>
 
 <body>
-    <!-- Toast Notification -->
     <div id="toast"></div>
 
-    <style>
-        .tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 10px 0;
-            border-bottom: 3px solid transparent;
-        }
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-    </style>
     <div class="header">
         <h1><i data-lucide="shield"></i> Clinic Portal</h1>
         <div id="logout-btn" style="display:none; cursor:pointer; color: #ef4444;" onclick="logout()">
@@ -264,20 +96,15 @@
         </div>
     </div>
 
-    <!-- Login -->
+    <!-- Login Screen -->
     <div id="login-screen">
-        <form class="login-card" action="/perform_login" method="POST">
+        <form class="login-card" onsubmit="login(event)">
             <i data-lucide="lock" style="color: var(--primary); width: 48px; height: 48px;"></i>
-            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Doctor Login</h2>
-            <p style="color: #64748b; font-size: 0.9rem;">Please enter your secure database password.</p>
-
-            <!-- Hardcoded username since only the doctor uses this -->
-            <input type="hidden" name="username" value="doctor">
-            <input type="password" name="password" id="passcode" placeholder="Enter Secure Password" required>
-
-            <button class="btn" type="submit">Access Records</button>
-            <div id="error-msg" style="color: red; margin-top: 10px; display: none;">Invalid password. Access denied.
-            </div>
+            <h2 style="color: var(--primary);">Doctor Login</h2>
+            <p style="color: #64748b; font-size: 0.9rem;">Enter passcode to manage website.</p>
+            <input type="password" id="passcode" placeholder="Passcode (try: admin123)" required>
+            <button class="btn" style="width: 100%;" type="submit">Access Dashboard</button>
+            <p id="error-msg" style="color: red; display: none; margin-top:10px;">Incorrect passcode</p>
         </form>
     </div>
 
@@ -285,637 +112,253 @@
     <div id="dashboard-screen">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('appointments')">Appointments</button>
-            <button class="tab-btn" onclick="switchTab('reviews')">Patient Reviews</button>
-            <button class="tab-btn" onclick="switchTab('qa')">❓ Q&amp;A</button>
-            <button class="tab-btn" onclick="switchTab('blogs')">📝 Blogs</button>
-            <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
+            <button class="tab-btn" onclick="switchTab('questions')">Q&A</button>
+            <button class="tab-btn" onclick="switchTab('reviews')">Reviews</button>
+            <button class="tab-btn" onclick="switchTab('blogs')">Blogs</button>
         </div>
 
-        <!-- Appointments Tab -->
+        <!-- Appointments -->
         <div id="tab-appointments" class="tab-content active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Upcoming Appointments</h2>
-                <button onclick="fetchAppointments()" class="btn" style="width: auto; background: var(--secondary);">
-                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
-                    Refresh list
-                </button>
+                <h2 style="color: var(--primary);">Upcoming Appointments</h2>
+                <button onclick="fetchAppointments()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
-
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Date Booked</th>
-                            <th>Patient Name</th>
-                            <th>Phone Number</th>
-                            <th>Preferred Slot</th>
-                            <th>Concern / Message</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <!-- Populated by JS -->
-                    </tbody>
+                    <thead><tr><th>Date</th><th>Patient</th><th>Phone</th><th>Slot</th><th>Message</th></tr></thead>
+                    <tbody id="apt-table"></tbody>
                 </table>
-                <div id="empty-state" class="empty-state" style="display: none;">
-                    <i data-lucide="calendar" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                    <h3>No appointments found.</h3>
-                    <p>When patients book via the website, they will appear here securely.</p>
-                </div>
             </div>
         </div>
 
-        <!-- Reviews Tab -->
+        <!-- Questions -->
+        <div id="tab-questions" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: var(--primary);">Patient Questions</h2>
+                <button onclick="fetchQuestions()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Date</th><th>Patient</th><th>Question</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="qa-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reviews -->
         <div id="tab-reviews" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary);">Patient Reviews</h2>
-                <button onclick="fetchReviews()" class="btn" style="width: auto; background: var(--secondary);">
-                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
-                    Refresh list
-                </button>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date Submitted</th>
-                            <th>Patient Name</th>
-                            <th>Rating</th>
-                            <th>Review</th>
-                            <th>Status (Actions)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reviews-table-body">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-                <div id="reviews-empty-state" class="empty-state" style="display: none;">
-                    <i data-lucide="star" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
-                    <h3>No reviews found.</h3>
-                    <p>When patients submit reviews, they will appear here requiring approval.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Q&A Tab -->
-        <div id="tab-qa" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
-                <div>
-                    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 4px;">Patient Questions</h2>
-                    <p style="color:#64748b; font-size:0.9rem; margin:0;">Answer questions and toggle which appear publicly in the FAQ section.</p>
-                </div>
-                <button onclick="fetchQA()" class="btn" style="width: auto; background: var(--secondary);">
-                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
-                    Refresh list
-                </button>
+                <h2 style="color: var(--primary);">Patient Reviews</h2>
+                <button onclick="fetchReviews()" class="btn btn-sm"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
             <div class="table-container">
                 <table>
-                    <thead><tr>
-                        <th>Date</th><th>Patient</th><th>Question</th><th>Answer</th><th>Actions</th>
-                    </tr></thead>
-                    <tbody id="qa-table-body"></tbody>
+                    <thead><tr><th>Patient</th><th>Rating</th><th>Review</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="reviews-table"></tbody>
                 </table>
-                <div id="qa-empty-state" class="empty-state" style="display:none;">
-                    <h3>No questions yet.</h3>
-                    <p>When patients submit questions, they'll appear here.</p>
-                </div>
             </div>
         </div>
 
-        <!-- Blogs Tab -->
+        <!-- Blogs -->
         <div id="tab-blogs" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap:wrap; gap:10px;">
-                <div>
-                    <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 4px;">Manage Blog Posts</h2>
-                    <p style="color:#64748b; font-size:0.9rem; margin:0;">Publish new articles or delete existing ones from the biological blog.</p>
-                </div>
-                <button onclick="fetchBlogs()" class="btn" style="width: auto; background: var(--secondary);">
-                    <i data-lucide="refresh-cw" style="width: 16px; display: inline-block; vertical-align: middle;"></i>
-                    Refresh list
-                </button>
-            </div>
+            <h2 style="color: var(--primary); margin-bottom: 20px;">Manage Blogs</h2>
             
-            <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-md); margin-bottom: 20px;">
-                <h3 style="margin-top: 0; color: var(--primary);">Publish New Post</h3>
-                <form id="blog-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div>
-                            <label style="display:block; font-weight:600; margin-bottom:5px;">Title</label>
-                            <input type="text" id="blog-title" placeholder="E.g. The Anatomy of a Tooth" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required>
-                        </div>
-                        <div>
-                            <label style="display:block; font-weight:600; margin-bottom:5px;">Category</label>
-                            <input type="text" id="blog-category" placeholder="E.g. Oral Biology" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display:block; font-weight:600; margin-bottom:5px;">Blog Image (Optional)</label>
-                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
-                            <button type="button" id="img-mode-url" onclick="setImageMode('url')" style="padding:8px 16px; border:2px solid var(--primary); background:var(--primary); color:white; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Paste URL</button>
-                            <button type="button" id="img-mode-file" onclick="setImageMode('file')" style="padding:8px 16px; border:2px solid var(--primary); background:white; color:var(--primary); border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Upload from Gallery</button>
-                        </div>
-                        <div id="img-url-input">
-                            <input type="url" id="blog-image" placeholder="https://images.unsplash.com/..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;">
-                        </div>
-                        <div id="img-file-input" style="display:none;">
-                            <input type="file" id="blog-image-file" accept="image/*" onchange="previewImage(this)" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:white;">
-                            <img id="blog-image-preview" src="" alt="Preview" style="display:none; margin-top:8px; max-width:200px; max-height:150px; border-radius:8px; border:1px solid #e2e8f0; object-fit:cover;">
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display:block; font-weight:600; margin-bottom:5px;">Short Excerpt</label>
-                        <textarea id="blog-excerpt" rows="2" placeholder="A brief summary for the card view..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required></textarea>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display:block; font-weight:600; margin-bottom:5px;">Full Content</label>
-                        <textarea id="blog-content" rows="6" placeholder="The detailed biological article content..." style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px;" required></textarea>
-                    </div>
-                    <button type="submit" class="btn">Publish Post</button>
-                </form>
-            </div>
+            <form onsubmit="addBlog(event)" style="background: white; padding: 20px; border-radius: 12px; margin-bottom:20px; box-shadow: var(--shadow-md);">
+                <h3>Add New Blog</h3>
+                <input type="text" id="b-title" placeholder="Title" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+                <input type="text" id="b-category" placeholder="Category" required style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+                <input type="url" id="b-image" placeholder="Image URL" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+                <textarea id="b-excerpt" placeholder="Short Excerpt" required rows="2" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;"></textarea>
+                <button class="btn btn-success" type="submit">Publish Blog</button>
+            </form>
 
             <div class="table-container">
                 <table>
-                    <thead><tr>
-                        <th>Date</th><th>Image</th><th>Title</th><th>Category</th><th>Actions</th>
-                    </tr></thead>
-                    <tbody id="blogs-table-body"></tbody>
+                    <thead><tr><th>Title</th><th>Category</th><th>Action</th></tr></thead>
+                    <tbody id="blogs-table"></tbody>
                 </table>
-            </div>
-        </div>
-
-        <!-- Settings Tab -->
-        <div id="tab-settings" class="tab-content">
-            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: var(--primary); margin-bottom: 20px;">Change Admin Password</h2>
-            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 480px; box-shadow: var(--shadow-md);">
-                <p style="color: #64748b; margin-bottom: 20px; font-size: 0.9rem;">Enter your current password and choose a new one. The new password will be saved and persist even after a server restart.</p>
-                <form id="change-password-form">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display:block; font-weight:600; margin-bottom:6px;">Current Password</label>
-                        <input type="password" id="cp-current" placeholder="Enter current password" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required>
-                    </div>
-                    <div style="margin-bottom: 16px;">
-                        <label style="display:block; font-weight:600; margin-bottom:6px;">New Password</label>
-                        <input type="password" id="cp-new" placeholder="At least 6 characters" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required minlength="6">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; font-weight:600; margin-bottom:6px;">Confirm New Password</label>
-                        <input type="password" id="cp-confirm" placeholder="Repeat new password" style="width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:1rem; box-sizing:border-box;" required minlength="6">
-                    </div>
-                    <div id="cp-message" style="margin-bottom:16px; display:none; padding: 10px 14px; border-radius:8px; font-size:0.9rem;"></div>
-                    <button type="submit" class="btn" style="width:100%;">Update Password</button>
-                </form>
             </div>
         </div>
     </div>
 
-
     <script>
         lucide.createIcons();
 
-        // ---------------------------------------------------------------
-        // GLOBAL API FETCH WRAPPER
-        // Forces every API call to bypass browser and proxy cache, and
-        // intercepts 401 Unauthorized globally (returned instead of a
-        // 302 redirect, which browsers cache and break subsequent visits).
-        // ---------------------------------------------------------------
-        async function apiFetch(url, options = {}) {
-            const defaults = {
-                credentials: 'same-origin',
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    ...(options.headers || {})
-                }
-            };
-            const mergedOptions = { ...defaults, ...options, headers: { ...defaults.headers, ...(options.headers || {}) } };
-            const response = await fetch(url, mergedOptions);
-
-            // 401 means the session is expired — show the login screen
-            if (response.status === 401) {
-                document.getElementById('login-screen').style.display = 'flex';
-                document.getElementById('dashboard-screen').style.display = 'none';
-                document.getElementById('logout-btn').style.display = 'none';
-                return null; // Signal to callers to stop processing
-            }
-            return response;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
 
-
-        // Toast helper
-        let toastTimer;
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.background = isError ? '#991b1b' : '#166534';
-            toast.style.display = 'block';
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
-
-        // 1. Initial Load: Check if we are logged in or if there was an error
-        document.addEventListener("DOMContentLoaded", () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('error') === 'true') {
-                document.getElementById("error-msg").style.display = "block";
-            }
-
-            // Restore the last active tab (default: appointments)
-            const lastTab = localStorage.getItem('activeAdminTab') || 'appointments';
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            tabBtns.forEach(btn => {
-                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${lastTab}'`)) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            const tabEl = document.getElementById('tab-' + lastTab);
-            if (tabEl) tabEl.classList.add('active');
-
-            // Load the data for the restored tab
-            if (lastTab === 'reviews') fetchReviews();
-            else if (lastTab === 'qa') fetchQA();
-            else fetchAppointments();
-
-            // Change Password form handler
-            const cpForm = document.getElementById('change-password-form');
-            if (cpForm) {
-                cpForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const msgEl = document.getElementById('cp-message');
-                    const newPass = document.getElementById('cp-new').value;
-                    const confirmPass = document.getElementById('cp-confirm').value;
-
-                    if (newPass !== confirmPass) {
-                        msgEl.style.display = 'block';
-                        msgEl.style.background = '#fee2e2';
-                        msgEl.style.color = '#991b1b';
-                        msgEl.innerText = 'New passwords do not match.';
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch('/api/admin/change-password', {
-                            method: 'POST',
-                            credentials: 'same-origin',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                currentPassword: document.getElementById('cp-current').value,
-                                newPassword: newPass
-                            })
-                        });
-                        const result = await response.json();
-                        msgEl.style.display = 'block';
-                        if (response.ok) {
-                            msgEl.style.background = '#dcfce7';
-                            msgEl.style.color = '#166534';
-                            msgEl.innerText = '✅ ' + result.message + ' Redirecting to login...';
-                            cpForm.reset();
-                            // Logout and redirect to login page after 2 seconds
-                            setTimeout(() => {
-                                fetch('/perform_logout', { method: 'POST', credentials: 'same-origin' })
-                                    .finally(() => { window.location.href = '/admin.html'; });
-                            }, 2000);
-                        } else {
-                            msgEl.style.background = '#fee2e2';
-                            msgEl.style.color = '#991b1b';
-                            msgEl.innerText = result.error || 'Failed to update password.';
-                        }
-                    } catch (err) {
-                        msgEl.style.display = 'block';
-                        msgEl.style.background = '#fee2e2';
-                        msgEl.style.color = '#991b1b';
-                        msgEl.innerText = 'An error occurred. Please try again.';
-                    }
-                });
-            }
-        });
-
-
-        function logout() {
-            // Send a hidden invisible form to the Spring logout endpoint
-            fetch('/perform_logout', { method: 'POST' }).then(() => {
-                window.location.href = '/admin.html';
-            });
-        }
-
-        async function fetchAppointments() {
-            try {
-                const response = await apiFetch('/api/appointments');
-                if (!response) return; // 401 handled globally
-
-                // Successfully authenticated — show the dashboard
+        // Simple Static Login
+        function login(e) {
+            e.preventDefault();
+            if(document.getElementById('passcode').value === 'admin123') {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'block';
                 document.getElementById('logout-btn').style.display = 'block';
-
-                const data = await response.json();
-                const tableBody = document.getElementById('table-body');
-                const emptyState = document.getElementById('empty-state');
-                tableBody.innerHTML = '';
-
-                if (data.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    emptyState.style.display = 'none';
-                    data.reverse().forEach(apt => {
-                        const row = document.createElement('tr');
-                        const dateObj = new Date(apt.createdAt);
-                        const formattedCreatedDate = isNaN(dateObj) ? 'Just now' : dateObj.toLocaleString();
-
-                        row.innerHTML = `
-                            <td data-label="Date Booked" style="color: #64748b; font-size: 0.85rem;">${formattedCreatedDate}</td>
-                            <td data-label="Patient Name" style="font-weight: 600;">${apt.name || '--'}</td>
-                            <td data-label="Phone"><a href="tel:${apt.phone}" style="color: var(--primary); text-decoration: underline;">${apt.phone}</a></td>
-                            <td data-label="Preferred Slot">
-                                <div>
-                                    <strong style="display:block">${apt.preferredDate || '--'}</strong>
-                                    <span style="font-size: 0.85rem; color: #64748b;">${apt.preferredTime || '--'}</span>
-                                </div>
-                            </td>
-                            <td data-label="Concern" style="max-width: 300px;">${apt.message || '--'}</td>
-                            <td data-label="Status"><span class="badge">New</span></td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                }
-                showToast(`✓ ${data.length} appointment(s) loaded.`);
-            } catch (error) {
-                console.error('Error fetching appointments:', error);
-                showToast('Error loading appointments.', true);
+                fetchAppointments();
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
             }
-        } // end fetchAppointments
+        }
 
-        // --- Review & Q&A Tab Logic ---
-        function switchTab(tabName) {
+        function logout() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('passcode').value = '';
+        }
+
+        function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
             event.target.classList.add('active');
-            // Persist the selected tab so refresh lands on the same one
-            localStorage.setItem('activeAdminTab', tabName);
-
-            if (tabName === 'reviews') fetchReviews();
-            else if (tabName === 'qa') fetchQA();
-            else if (tabName === 'blogs') fetchBlogs();
-            else if (tabName === 'appointments') fetchAppointments();
+            
+            if(tabId === 'appointments') fetchAppointments();
+            if(tabId === 'questions') fetchQuestions();
+            if(tabId === 'reviews') fetchReviews();
+            if(tabId === 'blogs') fetchBlogs();
         }
 
-        // --- Blog Image Mode Toggle ---
-        var blogImageBase64 = '';
-
-        function setImageMode(mode) {
-            var urlBtn = document.getElementById('img-mode-url');
-            var fileBtn = document.getElementById('img-mode-file');
-            var urlInput = document.getElementById('img-url-input');
-            var fileInput = document.getElementById('img-file-input');
-            if (mode === 'url') {
-                urlBtn.style.background = 'var(--primary)'; urlBtn.style.color = 'white';
-                fileBtn.style.background = 'white'; fileBtn.style.color = 'var(--primary)';
-                urlInput.style.display = 'block'; fileInput.style.display = 'none';
-                blogImageBase64 = '';
-            } else {
-                fileBtn.style.background = 'var(--primary)'; fileBtn.style.color = 'white';
-                urlBtn.style.background = 'white'; urlBtn.style.color = 'var(--primary)';
-                fileInput.style.display = 'block'; urlInput.style.display = 'none';
-                document.getElementById('blog-image').value = '';
-            }
-        }
-
-        function previewImage(input) {
-            var preview = document.getElementById('blog-image-preview');
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    blogImageBase64 = e.target.result;
-                    preview.src = blogImageBase64;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                preview.style.display = 'none';
-                blogImageBase64 = '';
-            }
-        }
-
-        // --- Blog Logic ---
-        document.getElementById('blog-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            var imageUrl = blogImageBase64 || document.getElementById('blog-image').value;
-            const payload = {
-                title: document.getElementById('blog-title').value,
-                category: document.getElementById('blog-category').value,
-                imageUrl: imageUrl,
-                excerpt: document.getElementById('blog-excerpt').value,
-                content: document.getElementById('blog-content').value
-            };
+        // --- Fetch Logic ---
+        async function fetchAppointments() {
+            const t = document.getElementById('apt-table');
+            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
             try {
-                const res = await fetch('/api/blogs', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (res.ok) {
-                    showToast('✓ Blog published successfully.');
-                    document.getElementById('blog-form').reset();
-                    blogImageBase64 = '';
-                    document.getElementById('blog-image-preview').style.display = 'none';
-                    setImageMode('url');
-                    fetchBlogs();
-                } else {
-                    showToast('Failed to publish blog.', true);
-                }
-            } catch (err) {
-                showToast('Error publishing blog.', true);
-            }
-        });
-
-        async function fetchBlogs() {
-            try {
-                const res = await fetch('/api/blogs', { credentials: 'same-origin' });
-                if (!res.ok) { showToast('Could not load blogs.', true); return; }
-                const blogs = await res.json();
-                const tbody = document.getElementById('blogs-table-body');
-                tbody.innerHTML = '';
-                
-                blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(b => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td data-label="Date"><div style="font-size:0.85rem;color:#64748b;">${new Date(b.createdAt).toLocaleDateString()}</div></td>
-                        <td data-label="Image"><img src="${b.imageUrl}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" onerror="this.src='https://via.placeholder.com/50';"></td>
-                        <td data-label="Title" style="font-weight: 600;">${b.title}</td>
-                        <td data-label="Category"><span class="badge" style="background:var(--primary-light); color:var(--primary);">${b.category}</span></td>
-                        <td data-label="Actions">
-                            <button onclick="deleteBlog(${b.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Delete"><i data-lucide="trash-2" style="width:16px;"></i></button>
-                        </td>`;
-                    tbody.appendChild(row);
+                const q = window.query(window.collection(window.db, "appointments"), window.orderBy("createdAt", "desc"));
+                const snap = await window.getDocs(q);
+                t.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    t.innerHTML += `<tr>
+                        <td>${d.createdAt?.toDate().toLocaleDateString() || 'New'}</td>
+                        <td><strong>${d.name}</strong></td>
+                        <td>${d.phone}</td>
+                        <td>${d.preferredDate} <br><small>${d.preferredTime}</small></td>
+                        <td>${d.message}</td>
+                    </tr>`;
                 });
-                lucide.createIcons();
-                showToast(`✓ ${blogs.length} blog(s) loaded.`);
-            } catch (e) {
-                console.error(e);
-                showToast('Error loading blogs.', true);
-            }
+                if(snap.empty) t.innerHTML = '<tr><td colspan="5">No appointments yet.</td></tr>';
+            } catch(e) { console.error(e); t.innerHTML = '<tr><td colspan="5">Error loading data.</td></tr>'; }
         }
 
-        async function deleteBlog(id) {
-            if (!confirm('Are you sure you want to delete this blog post?')) return;
+        async function fetchQuestions() {
+            const t = document.getElementById('qa-table');
+            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
             try {
-                await fetch(`/api/blogs/${id}`, { method: 'DELETE', credentials: 'same-origin' });
-                showToast('✓ Blog deleted.');
-                fetchBlogs();
-            } catch (e) {
-                showToast('Error deleting blog.', true);
-            }
-        }
-
-        async function fetchQA() {
-            try {
-                const res = await apiFetch('/api/questions');
-                if (!res) return; // 401 handled globally
-                if (!res.ok) { showToast('Could not load questions.', true); return; }
-                const questions = await res.json();
-                const tbody = document.getElementById('qa-table-body');
-                const empty = document.getElementById('qa-empty-state');
-                tbody.innerHTML = '';
-                if (questions.length === 0) { empty.style.display = 'block'; showToast('✓ No questions yet.'); return; }
-                empty.style.display = 'none';
-                questions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(q => {
-                    const row = document.createElement('tr');
-                    const answered = q.answerText && q.answerText.trim() !== '';
-                    const displayBadge = q.isDisplayed
-                        ? `<span class="badge" style="background:#dcfce7;color:#166534;">Shown</span>`
-                        : `<span class="badge" style="background:#f1f5f9;color:#64748b;">Hidden</span>`;
-                    row.innerHTML = `
-                        <td data-label="Date"><div style="font-size:0.85rem;color:#64748b;">${new Date(q.createdAt).toLocaleDateString()}</div></td>
-                        <td data-label="Patient"><strong>${q.patientName}</strong></td>
-                        <td data-label="Question" style="max-width:200px;">${q.questionText}</td>
-                        <td data-label="Answer">
-                            ${answered
-                                ? `<div style="max-width:200px;color:#166534;">${q.answerText}</div>`
-                                : `<div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                    <textarea id="ans-${q.id}" rows="2" style="width:180px;padding:6px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" placeholder="Type your answer..."></textarea>
-                                    <button onclick="submitAnswer(${q.id})" style="background:var(--secondary);color:white;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Save</button>
-                                  </div>`
-                            }
-                        </td>
-                        <td data-label="Actions">
-                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                                ${displayBadge}
-                                ${answered ? `<button onclick="toggleDisplay(${q.id})" style="background:none;border:1px solid #e2e8f0;color:var(--primary);padding:4px 8px;border-radius:6px;cursor:pointer;font-size:0.8rem;">${q.isDisplayed ? 'Hide' : 'Show'}</button>` : ''}
-                                <button onclick="deleteQA(${q.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;" title="Delete"><i data-lucide="trash-2" style="width:16px;"></i></button>
-                            </div>
-                        </td>`;
-                tbody.appendChild(row);
+                const q = window.query(window.collection(window.db, "questions"), window.orderBy("createdAt", "desc"));
+                const snap = await window.getDocs(q);
+                t.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const id = doc.id;
+                    const status = d.answered ? '<span class="badge badge-success">Answered</span>' : '<span class="badge badge-warning">Pending</span>';
+                    const action = d.answered ? `<small>${d.answerText}</small>` : `
+                        <input type="text" id="ans-${id}" placeholder="Type answer..." style="padding:4px; width:150px;">
+                        <button onclick="answerQuestion('${id}')" class="btn btn-sm btn-success">Save</button>`;
+                    
+                    t.innerHTML += `<tr>
+                        <td>${d.createdAt?.toDate().toLocaleDateString() || 'New'}</td>
+                        <td><strong>${d.patientName}</strong></td>
+                        <td>${d.questionText}</td>
+                        <td>${status}</td>
+                        <td>${action}</td>
+                    </tr>`;
                 });
-                lucide.createIcons();
-                showToast(`✓ ${questions.length} question(s) loaded.`);
-            } catch (e) { console.error(e); showToast('Error loading Q&A.', true); }
+            } catch(e) { console.error(e); }
         }
 
-        async function submitAnswer(id) {
-            const ansEl = document.getElementById(`ans-${id}`);
-            if (!ansEl || !ansEl.value.trim()) return;
-            await apiFetch(`/api/questions/${id}/answer`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ answerText: ansEl.value }) });
-            showToast('✓ Answer saved successfully.');
-            fetchQA();
+        window.answerQuestion = async function(id) {
+            const ans = document.getElementById('ans-' + id).value;
+            if(!ans) return alert('Enter an answer');
+            await window.updateDoc(window.doc(window.db, "questions", id), {
+                answerText: ans,
+                answered: true
+            });
+            showToast("Question answered!");
+            fetchQuestions();
         }
-
-        async function toggleDisplay(id) {
-            await apiFetch(`/api/questions/${id}/toggle-display`, { method: 'PUT' });
-            showToast('✓ Display status updated.');
-            fetchQA();
-        }
-
-        async function deleteQA(id) {
-            if (!confirm('Delete this question?')) return;
-            await apiFetch(`/api/questions/${id}`, { method: 'DELETE' });
-            showToast('✓ Question deleted.');
-            fetchQA();
-        }
-
 
         async function fetchReviews() {
+            const t = document.getElementById('reviews-table');
+            t.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
             try {
-                const response = await apiFetch('/api/reviews');
-                if (!response) return; // 401 handled globally
-                if (!response.ok) { showToast('Could not load reviews.', true); return; }
-
-                const reviews = await response.json();
-                const tableBody = document.getElementById('reviews-table-body');
-                const emptyState = document.getElementById('reviews-empty-state');
-
-                tableBody.innerHTML = "";
-
-                if (reviews.length === 0) {
-                    emptyState.style.display = "block";
-                    return;
-                }
-
-                emptyState.style.display = "none";
-
-                reviews.forEach(review => {
-                    const row = document.createElement("tr");
-
-                    const dateObj = new Date(review.createdAt);
-                    const formattedDate = dateObj.toLocaleDateString() + " " + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                    const statusBadge = review.isApproved 
-                        ? `<span class="badge" style="background: #dcfce7; color: #166534;"><i data-lucide="check-circle" style="width:14px; display:inline-block; vertical-align:middle;"></i> Approved</span>`
-                        : `<span class="badge" style="background: #fef9c3; color: #854d0e;"><i data-lucide="clock" style="width:14px; display:inline-block; vertical-align:middle;"></i> Pending</span>`;
+                const q = window.query(window.collection(window.db, "reviews"), window.orderBy("createdAt", "desc"));
+                const snap = await window.getDocs(q);
+                t.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const id = doc.id;
+                    const status = d.approved ? '<span class="badge badge-success">Live</span>' : '<span class="badge badge-warning">Pending</span>';
+                    const action = d.approved ? '' : `<button onclick="approveReview('${id}')" class="btn btn-sm btn-success">Approve</button>`;
                     
-                    const actionButtons = review.isApproved
-                        ? `<button onclick="deleteReview(${review.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Delete Review"><i data-lucide="trash-2"></i></button>`
-                        : `<button onclick="approveReview(${review.id})" style="background:none; border:none; color:#166534; cursor:pointer; margin-right: 15px;" title="Approve Review"><i data-lucide="check"></i> Approve</button>
-                           <button onclick="deleteReview(${review.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Delete Review"><i data-lucide="trash-2"></i> Delete</button>`;
-
-                    row.innerHTML = `
-                        <td data-label="Date Submitted"><div style="font-size: 0.9em; color: #64748b;">${formattedDate}</div></td>
-                        <td data-label="Patient Name"><strong>${review.patientName}</strong></td>
-                        <td data-label="Rating" style="color: #f59e0b;">${'★'.repeat(review.rating)}<span style="color: #cbd5e1;">${'★'.repeat(5-review.rating)}</span></td>
-                        <td data-label="Review"><div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${review.comment}">${review.comment}</div></td>
-                        <td data-label="Status">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                ${statusBadge}
-                                ${actionButtons}
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
+                    t.innerHTML += `<tr>
+                        <td><strong>${d.patientName}</strong></td>
+                        <td>${'★'.repeat(d.rating)}</td>
+                        <td>${d.comment}</td>
+                        <td>${status}</td>
+                        <td>${action} <button onclick="deleteReview('${id}')" class="btn btn-sm btn-danger"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></td>
+                    </tr>`;
                 });
                 lucide.createIcons();
-                showToast(`✓ ${reviews.length} review(s) loaded.`);
-            } catch (error) {
-                console.error("Error fetching reviews:", error);
-                showToast('Error loading reviews.', true);
-            }
+            } catch(e) { console.error(e); }
         }
 
-        async function approveReview(id) {
-            if(!confirm('Are you sure you want to approve this review? It will appear publicly on the website.')) return;
-            try {
-                await apiFetch(`/api/reviews/${id}/approve`, { method: 'PUT' });
-                showToast('✓ Review approved!');
-                fetchReviews();
-            } catch (e) {
-                console.error(e);
-                showToast('Error approving review.', true);
-            }
+        window.approveReview = async function(id) {
+            await window.updateDoc(window.doc(window.db, "reviews", id), { approved: true });
+            showToast("Review approved & live!");
+            fetchReviews();
+        }
+        
+        window.deleteReview = async function(id) {
+            if(!confirm('Delete this review?')) return;
+            await window.deleteDoc(window.doc(window.db, "reviews", id));
+            showToast("Review deleted!");
+            fetchReviews();
         }
 
-        async function deleteReview(id) {
-            if(!confirm('Are you sure you want to delete this review?')) return;
+        async function fetchBlogs() {
+            const t = document.getElementById('blogs-table');
+            t.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
             try {
-                await apiFetch(`/api/reviews/${id}`, { method: 'DELETE' });
-                showToast('✓ Review deleted.');
-                fetchReviews();
-            } catch (e) {
-                console.error(e);
-                showToast('Error deleting review.', true);
-            }
+                const q = window.query(window.collection(window.db, "blogs"), window.orderBy("date", "desc"));
+                const snap = await window.getDocs(q);
+                t.innerHTML = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    t.innerHTML += `<tr>
+                        <td><strong>${d.title}</strong></td>
+                        <td><span class="badge">${d.category}</span></td>
+                        <td><button onclick="deleteBlog('${doc.id}')" class="btn btn-sm btn-danger">Delete</button></td>
+                    </tr>`;
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        window.addBlog = async function(e) {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('b-title').value,
+                category: document.getElementById('b-category').value,
+                image: document.getElementById('b-image').value,
+                excerpt: document.getElementById('b-excerpt').value,
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            };
+            await window.addDoc(window.collection(window.db, "blogs"), payload);
+            showToast("Blog published!");
+            e.target.reset();
+            fetchBlogs();
+        }
+
+        window.deleteBlog = async function(id) {
+            if(!confirm('Delete this blog?')) return;
+            await window.deleteDoc(window.doc(window.db, "blogs", id));
+            showToast("Blog deleted!");
+            fetchBlogs();
         }
     </script>
 </body>
-
 </html>
