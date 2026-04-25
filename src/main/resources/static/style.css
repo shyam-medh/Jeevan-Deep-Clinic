@@ -449,6 +449,9 @@ img {
 
 .about-image img {
     border-radius: calc(var(--radius-lg) - 5px);
+    width: 100%;
+    object-fit: cover;
+    aspect-ratio: 4/5;
 }
 
 .about-content {
@@ -584,15 +587,23 @@ img {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--primary);
+    color: var(--white);
+    background: var(--primary);
     font-weight: 600;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .service-link:hover {
-    color: var(--secondary);
+    background: #0d3c69; /* var(--primary-dark) equivalent */
     gap: 10px;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 76, 129, 0.25);
 }
 
 /* Testimonials */
@@ -1658,5 +1669,13 @@ body {
 .floating-lang-option.active {
     background: #e6f0fa;
     color: #0f4c81;
+}
+
+/* Service Modal Single Image layout */
+.service-modal-grid { display: grid; grid-template-columns: 1fr; gap: 0; align-items: center; }
+.service-modal-grid img { border-radius: 16px 16px 0 0 !important; max-height: 300px; width: 100%; height: auto; object-fit: contain; }
+@media (min-width: 768px) {
+    .service-modal-grid { grid-template-columns: 1fr 1fr; }
+    .service-modal-grid img { border-radius: 16px 0 0 16px !important; max-height: 90vh; }
 }
 

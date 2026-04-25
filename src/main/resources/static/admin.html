@@ -85,12 +85,12 @@
             .header h1 { font-size:1rem; }
             .tabs { gap:6px; }
             .tab-btn { padding:8px 12px; font-size:0.82rem; }
-            #blogs-table-wrap, #apt-table-wrap { display:none !important; }
-            #blogs-card-list, #apt-card-list { display:flex !important; }
+            #blogs-table-wrap, #apt-table-wrap, #qa-table-wrap, #reviews-table-wrap { display:none !important; }
+            #blogs-card-list, #apt-card-list, #qa-card-list, #reviews-card-list { display:flex !important; }
         }
         @media(min-width:769px) {
-            #blogs-card-list, #apt-card-list { display:none !important; }
-            #blogs-table-wrap, #apt-table-wrap { display:block !important; }
+            #blogs-card-list, #apt-card-list, #qa-card-list, #reviews-card-list { display:none !important; }
+            #blogs-table-wrap, #apt-table-wrap, #qa-table-wrap, #reviews-table-wrap { display:block !important; }
         }
     </style>
 </head>
@@ -170,7 +170,8 @@
                 <h2 style="margin:0;color:var(--primary);">Patient Questions</h2>
                 <button onclick="fetchQuestions()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
-            <div class="table-container">
+            <div id="qa-card-list" class="blog-card-list"></div>
+            <div class="table-container" id="qa-table-wrap">
                 <table><thead><tr><th>Date</th><th>Patient</th><th>Question</th><th>Status</th><th>Answer / Action</th><th>Website Visibility</th></tr></thead>
                 <tbody id="qa-table"></tbody></table>
             </div>
@@ -182,7 +183,8 @@
                 <h2 style="margin:0;color:var(--primary);">Patient Reviews</h2>
                 <button onclick="fetchReviews()" class="btn btn-sm btn-success"><i data-lucide="refresh-cw"></i> Refresh</button>
             </div>
-            <div class="table-container">
+            <div id="reviews-card-list" class="blog-card-list"></div>
+            <div class="table-container" id="reviews-table-wrap">
                 <table><thead><tr><th>Patient</th><th>Rating</th><th>Review</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="reviews-table"></tbody></table>
             </div>
@@ -372,13 +374,16 @@
         // ── Q&A ──
         async function fetchQuestions() {
             const t = document.getElementById('qa-table');
+            const cList = document.getElementById('qa-card-list');
             t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px">Loading...</td></tr>';
+            cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">Loading...</div>';
             try {
                 const snap = await window.getDocs(window.collection(window.db, "questions"));
                 const docs = [];
                 snap.forEach(d => docs.push({id: d.id, ...d.data()}));
                 docs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
                 t.innerHTML = '';
+                cList.innerHTML = '';
                 docs.forEach(d => {
                     const id = d.id;
                     const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : 'New';
@@ -386,6 +391,10 @@
                     const action = d.answered
                         ? `<small style="color:#166534">✓ "${d.answerText}"</small>`
                         : `<div style="display:flex;gap:6px;"><input type="text" id="ans-${id}" placeholder="Type answer..." style="padding:6px;border-radius:6px;border:1px solid #ddd;flex:1;min-width:120px;font-family:inherit;font-size:0.85rem;"><button onclick="answerQ('${id}')" class="btn btn-sm btn-success">Save</button></div>`;
+                    const actionMobile = d.answered
+                        ? `<small style="color:#166534;display:block;margin-top:8px;">✓ "${d.answerText}"</small>`
+                        : `<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"><input type="text" id="ans-mob-${id}" placeholder="Type answer..." style="padding:8px;border-radius:6px;border:1px solid #ddd;width:100%;font-family:inherit;font-size:1rem;"><button onclick="answerQMob('${id}')" class="btn btn-sm btn-success" style="width:100%;justify-content:center;padding:10px;">Save Answer</button></div>`;
+                    
                     // Visibility toggle – only for answered questions
                     const isVisible = d.showOnWebsite !== false; // defaults to true if not set
                     const visBtn = d.answered
@@ -393,6 +402,12 @@
                             ${isVisible ? '👁 Showing' : '🚫 Hidden'}
                            </button>`
                         : '<span style="color:#94a3b8;font-size:0.8rem;">Not answered</span>';
+                    const visBtnMobile = d.answered
+                        ? `<button onclick="toggleQAVisibility('${id}',${isVisible})" class="btn btn-sm" style="background:${isVisible ? '#166534' : '#64748b'};width:100%;justify-content:center;margin-top:8px;padding:10px;">
+                            ${isVisible ? '👁 Currently Visible on Website' : '🚫 Currently Hidden'}
+                           </button>`
+                        : '';
+                    
                     t.innerHTML += `<tr>
                         <td><small>${date}</small></td>
                         <td><strong>${d.patientName}</strong></td>
@@ -401,10 +416,30 @@
                         <td style="min-width:200px">${action}</td>
                         <td>${visBtn}</td>
                     </tr>`;
+
+                    cList.innerHTML += `<div class="blog-card-item" style="flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;width:100%;">
+                            <div><strong>${d.patientName}</strong> <small style="color:#64748b">(${date})</small></div>
+                            <div>${status}</div>
+                        </div>
+                        <div style="font-size:0.95rem;background:#f8fafc;padding:10px;border-radius:6px;border-left:3px solid var(--primary);">"${d.questionText}"</div>
+                        ${actionMobile}
+                        ${visBtnMobile}
+                    </div>`;
                 });
-                if (!docs.length) t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No questions yet.</td></tr>';
+                if (!docs.length) {
+                    t.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">No questions yet.</td></tr>';
+                    cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">No questions yet.</div>';
+                }
             } catch(e) { console.error(e); showToast('Error: ' + e.message, true); }
         }
+
+        window.answerQMob = async function(id) {
+            const ans = document.getElementById('ans-mob-' + id).value.trim();
+            if (!ans) return alert('Please type an answer.');
+            await window.updateDoc(window.doc(window.db, "questions", id), { answerText: ans, answered: true, showOnWebsite: true });
+            showToast('✓ Answer saved! Now visible on the website.'); fetchQuestions();
+        };
 
         window.answerQ = async function(id) {
             const ans = document.getElementById('ans-' + id).value.trim();
@@ -424,13 +459,16 @@
         // ── Reviews ──
         async function fetchReviews() {
             const t = document.getElementById('reviews-table');
+            const cList = document.getElementById('reviews-card-list');
             t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px">Loading...</td></tr>';
+            cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">Loading...</div>';
             try {
                 const snap = await window.getDocs(window.collection(window.db, "reviews"));
                 const docs = [];
                 snap.forEach(d => docs.push({id: d.id, ...d.data()}));
                 docs.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
                 t.innerHTML = '';
+                cList.innerHTML = '';
                 docs.forEach(d => {
                     const id = d.id;
                     const isLive = d.approved && d.showOnWebsite !== false;
@@ -442,12 +480,22 @@
                     const approveBtn = !d.approved
                         ? `<button onclick="approveRev('${id}')" class="btn btn-sm btn-success" style="margin-right:5px">✓ Approve</button>`
                         : '';
+                    const approveBtnMobile = !d.approved
+                        ? `<button onclick="approveRev('${id}')" class="btn btn-sm btn-success" style="width:100%;justify-content:center;padding:10px;">✓ Approve</button>`
+                        : '';
+                    
                     // Show/Hide toggle only for approved reviews
                     const visBtn = d.approved
                         ? `<button onclick="toggleRevVisibility('${id}',${isLive})" class="btn btn-sm" style="background:${isLive ? '#166534' : '#64748b'};margin-right:5px;min-width:80px">
                             ${isLive ? '👁 Showing' : '🚫 Hidden'}
                            </button>`
                         : '';
+                    const visBtnMobile = d.approved
+                        ? `<button onclick="toggleRevVisibility('${id}',${isLive})" class="btn btn-sm" style="background:${isLive ? '#166534' : '#64748b'};width:100%;justify-content:center;padding:10px;">
+                            ${isLive ? '👁 Currently Visible' : '🚫 Currently Hidden'}
+                           </button>`
+                        : '';
+
                     t.innerHTML += `<tr>
                         <td><strong>${d.patientName}</strong></td>
                         <td style="color:#f59e0b;font-size:1.1rem">${'★'.repeat(d.rating)}</td>
@@ -455,9 +503,26 @@
                         <td>${statusBadge}</td>
                         <td>${approveBtn}${visBtn}<button onclick="deleteRev('${id}')" class="btn btn-sm btn-danger"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></td>
                     </tr>`;
+
+                    cList.innerHTML += `<div class="blog-card-item" style="flex-direction:column;gap:8px;">
+                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                            <div><strong>${d.patientName}</strong></div>
+                            <div style="color:#f59e0b;font-size:1.1rem">${'★'.repeat(d.rating)}</div>
+                        </div>
+                        <div style="font-size:0.95rem;background:#f8fafc;padding:10px;border-radius:6px;font-style:italic;">"${d.comment}"</div>
+                        <div style="margin-bottom:8px;">${statusBadge}</div>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            ${approveBtnMobile}
+                            ${visBtnMobile}
+                            <button onclick="deleteRev('${id}')" class="btn btn-sm btn-danger" style="width:100%;justify-content:center;padding:10px;"><i data-lucide="trash-2" style="width:14px;height:14px;"></i> Delete</button>
+                        </div>
+                    </div>`;
                 });
                 lucide.createIcons();
-                if (!docs.length) t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8">No reviews yet.</td></tr>';
+                if (!docs.length) {
+                    t.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8">No reviews yet.</td></tr>';
+                    cList.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">No reviews yet.</div>';
+                }
             } catch(e) { console.error(e); showToast('Error loading reviews: ' + e.message, true); }
         }
 

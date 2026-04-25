@@ -47,10 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const navLinks = document.querySelector('.nav-links');
 
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
+    if (mobileMenuBtn && navLinks) {
+        function toggleMenu() {
             navLinks.classList.toggle('open');
-            // Change icon
             const icon = mobileMenuBtn.querySelector('i');
             if (navLinks.classList.contains('open')) {
                 icon.setAttribute('data-lucide', 'x');
@@ -58,6 +57,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 icon.setAttribute('data-lucide', 'menu');
             }
             lucide.createIcons();
+        }
+        
+        mobileMenuBtn.addEventListener('click', toggleMenu);
+        
+        // Close menu when a link is clicked
+        const links = navLinks.querySelectorAll('a');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('open')) {
+                    toggleMenu();
+                }
+            });
         });
     }
 
